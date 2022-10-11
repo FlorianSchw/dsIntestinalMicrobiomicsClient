@@ -1,27 +1,8 @@
-
-################### Needs to be fully adjusted to the zoib::zoib function!
-
-
-
-####  params taken from the native R function
-####  description, details and title need to be adjusted to the zoib descriptions!
-
-
-
-
-
-
-
-
-
-
-
-
 #'
 #' @title Computes the regression for microbiome analysis based on multivariate zero-inflated logistic normal model
-#' @description This function is similar to the native R function from the IFAA package
-#' @details The function calls the server-side function \code{microbiomeMZILNDS} that computes the
-#' regression from a SummarizedExperiment object. SummarizedExperiment objects can be computed using the \code{ds.summarizedExperiment} function.
+#' @description This function is similar to the native R function from the Zoib package
+#' @details The function calls the server-side function \code{microbiomeZoibDS} that computes the
+#' model from a data.frame object.
 #' @param df is a string character describing the data.frame object to be analyzed
 #' @param model symbolic description of the model in the format of formula, such as y ~ x, y1 | y2 ~ x1+x2, or y1 ~ x | z.
 #' @param n.response Number of response variables. Default is 1.
@@ -75,31 +56,31 @@ ds.microbiomeZoib <- function(df = NULL, model = NULL, n.response = 1, joint = T
   }
 
 
-  if(is.null(SumExp)){
-    stop("Please provide the name of the SummarizedExperiment object!", call.=FALSE)
+  if(is.null(df)){
+    stop("Please provide the name of the data.frame object!", call.=FALSE)
   }
 
 
-  if(is.null(taxa)){
-    stop("Please provide the name(s) of the microbiome denominator data!", call.=FALSE)
+  if(is.null(model)){
+    stop("Please provide the a symbolic description of the model!", call.=FALSE)
   }
 
 
 
   # call the internal function that checks the input object is of the same class in all studies.
-  typ <- dsBaseClient::ds.class(SumExp, datasources)
+  typ <- dsBaseClient::ds.class(df, datasources)
 
 
 
   # Check whether the input is either of type data frame or matrix
-  if(!('SummarizedExperiment' %in% typ)){
-    stop("Only objects of type 'SummarizedExperiment' are allowed.", call.=FALSE)
+  if(!('data.frame' %in% typ)){
+    stop("Only objects of type 'data.frame' are allowed.", call.=FALSE)
   }
 
 
 
   # call the server side function that does the operation
-  cally <- call("microbiomeMZILNDS", SumExp, taxa, covariates, sampleIDname, adjust_method, fdrRate, paraJobs, bootB, taxDropThresh, standardize, sequentialRun, verbose, seed)
+  cally <- call("microbiomeZoibDS", df, model, n.response, joint, zero.inflation, one.inflation, random, EUID, link.mu, link.x0, link.x1, prec.int, prior.beta, prec.DN, lambda.L1, lambda.L2, lambda.ARD, prior.Sigma, scale.unif, scale.halfcauchy, n.chain, n.iter, n.burn, n.thin, inits, seeds)
   DSI::datashield.aggregate(datasources, cally)
 
 
