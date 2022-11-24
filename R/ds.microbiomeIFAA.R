@@ -26,7 +26,7 @@
 #' @param verbose Whether the process message is printed out to the console. Default is TRUE.
 #' @param seed Random seed for reproducibility. Can be set to NULL to remove seeding.
 #' @param datasources a list of \code{\link{DSConnection-class}} objects obtained after login
-#' @return XXXXX
+#' @return \code{ds.microbiomeIFAA} returns the association of the microbiome data with the covariates
 #' @author Florian Schwarz for the German Institute of Human Nutrition
 #' @import DSI
 #' @import dsBaseClient

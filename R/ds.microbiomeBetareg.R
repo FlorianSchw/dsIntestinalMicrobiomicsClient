@@ -1,9 +1,3 @@
-#### Documentation needs to be adjusted to Betareg!
-
-
-
-
-
 #'
 #' @title Fits beta regression models for rates and proportions via maximum likelihood
 #' @description This function is similar to the native R function betareg from the betareg package
@@ -22,7 +16,7 @@
 #' @param x is a logical. If TRUE, the response from the model fit will be returned.
 #' @param y is a logical. If TRUE, the model matrix from the model fit will be returned.
 #' @param datasources a list of \code{\link{DSConnection-class}} objects obtained after login. If the \code{datasources} argument is not specified the default set of connections will be used: see \code{\link{datashield.connections_default}}.
-#' @return \code{ds.microbiomeBetareg} returns XXXXXXXXXXXXXXXXXXXXXX
+#' @return \code{ds.microbiomeBetareg} returns a beta regression model
 #' @author Florian Schwarz for the German Institute of Human Nutrition
 #' @import DSI
 #' @import dsBaseClient
@@ -70,7 +64,7 @@ ds.microbiomeBetareg <- function(df = NULL, formula = NULL, na.action, weights, 
 
 
   # call the server side function that does the operation
-  cally <- call("microbiomeMZILNDS", SumExp, taxa, covariates, sampleIDname, adjust_method, fdrRate, paraJobs, bootB, taxDropThresh, standardize, sequentialRun, verbose, seed)
+  cally <- call("microbiomeBetaregDS", df, formula, na.action, weights, offset, link, link.phi, type, control, model, y, x)
   DSI::datashield.aggregate(datasources, cally)
 
 
@@ -78,24 +72,5 @@ ds.microbiomeBetareg <- function(df = NULL, formula = NULL, na.action, weights, 
 }
 
 # aggregate function
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

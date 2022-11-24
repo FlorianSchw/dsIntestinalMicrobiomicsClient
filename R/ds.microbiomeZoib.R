@@ -24,13 +24,13 @@
 #' @param scale.unif Upper bound of the uniform prior for the standard deviation of each random variable if prior.Sigma="VC.unif" is specified. Default is 20.
 #' @param scale.halfcauchy Scale parameter of the half-Cauchy prior for the standard deviation of each random variable if prior.Sigma = "VC.halfCauchy" is specified. Default is 20.
 #' @param n.chain Number of Markov chains from which posterior samples will be drawn (>=1; default = 2).
-#' @param n.iter Number of iterations per chain in the MCMC sampling (defualt = 5000) before burning-in and thinning.
+#' @param n.iter Number of iterations per chain in the MCMC sampling (default = 5000) before burning-in and thinning.
 #' @param n.burn Burning in period of the MCMC chains (default = 200).
 #' @param n.thin Thinning period of the MCMC chains after the burn-in (default = 5).
 #' @param inits optional specification of initial values for regression coefficients and variance/covariance parameters in the form of a list. If omitted, initial values will be generated automatically.
 #' @param seeds a vector of dimension n.chain that contains seeds for the initial values and the random number generators of the MCMC chains, if users wish to make the output from the model reproducible.
 #' @param datasources a list of \code{\link{DSConnection-class}} objects obtained after login
-#' @return \code{ds.microbiomeZoib} returns XXXXXXXXXXXXXXXXXXXXXX
+#' @return \code{ds.microbiomeZoib} returns the multivariate zero-inflated logistic normal model
 #' @author Florian Schwarz for the German Institute of Human Nutrition
 #' @import DSI
 #' @import dsBaseClient

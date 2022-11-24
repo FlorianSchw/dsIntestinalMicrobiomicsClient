@@ -17,7 +17,7 @@
 #' @param verbose Whether the process message is printed out to the console. Default is TRUE.
 #' @param seed Random seed for reproducibility. Can be set to NULL to remove seeding.
 #' @param datasources a list of \code{\link{DSConnection-class}} objects obtained after login
-#' @return \code{ds.microbiomeMZILN} returns XXXXXXXXXXXXXXXXXXXXXX
+#' @return \code{ds.microbiomeMZILN} returns the outcome of the specified multivariate zero-inflated logistic normal model
 #' @author Florian Schwarz for the German Institute of Human Nutrition
 #' @import DSI
 #' @import dsBaseClient
