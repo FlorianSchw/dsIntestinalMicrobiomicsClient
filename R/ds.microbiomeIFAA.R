@@ -4,6 +4,7 @@
 #' @details The function calls the server-side function \code{microbiomeIFAADS} that computes the
 #' association analysis from a SummarizedExperiment object. SummarizedExperiment objects can be computed using the \code{ds.summarizedExperiment} function.
 #' @param SumExp is a string character describing the SummarizedExperiment object
+#' @param microbVar This takes a single or vector of microbiome variable names (e.g., taxa, OTU and ASV names) of interest. Default is "all" meaning all microbiome variables will be analyzed. If a subset of microbiome variables is specified, the output will only contain the specified variables, and p-value adjustment for multiple testing will only be applied to the subset.
 #' @param covariates is a string character of covariates to be examined along the microbiome variables (can also be a vector of covariates).
 #' @param confounders is a string character for the covariates that will be adjusted in the model (can also be a vector of microbiome variables)
 #' @param sampleIDname is a string character for the sample ID variable.
@@ -24,7 +25,6 @@
 #' @param SDquantilThresh The threshold of the quantile of standard deviation of sequencing reads, above which could be selected as a reference taxon. Default is 0.
 #' @param balanceCut The threshold of the proportion of non-zero sequencing reads in each group of a binary variable for choosing the final reference taxa in phase 2. The default is 0.2 meaning at least 20% non-zero sequencing reads in each group are needed to be eligible for being chosen as a final reference taxon.
 #' @param verbose Whether the process message is printed out to the console. Default is TRUE.
-#' @param seed Random seed for reproducibility. Can be set to NULL to remove seeding.
 #' @param datasources a list of \code{\link{DSConnection-class}} objects obtained after login
 #' @return \code{ds.microbiomeIFAA} returns the association of the microbiome data with the covariates
 #' @author Florian Schwarz for the German Institute of Human Nutrition
@@ -34,10 +34,10 @@
 #' @export
 #'
 
-ds.microbiomeIFAA <- function(SumExp = NULL, covariates = NULL, confounders = NULL, sampleIDname = NULL, covariatesMany = TRUE, confoundersMany = FALSE,
+ds.microbiomeIFAA <- function(SumExp = NULL, microbVar = "all", covariates = NULL, confounders = NULL, sampleIDname = NULL, covariatesMany = TRUE, confoundersMany = FALSE,
                               nRef = 40, nRefMaxforEsti = 2, taxa = NULL, adjust_method = "BY", fdrRate = 0.15, paraJobs = NULL, bootB = 500,
                               standardize = FALSE, sequentialRun = FALSE, refReadsThresh = 0.2, taxDropThresh = 0, SDThresh = 0.05, SDquantilThresh = 0,
-                              balanceCut = 0.2, verbose = TRUE, seed = 1, datasources = NULL){
+                              balanceCut = 0.2, verbose = TRUE, datasources = NULL){
 
 
   # look for DS connections
@@ -56,7 +56,13 @@ ds.microbiomeIFAA <- function(SumExp = NULL, covariates = NULL, confounders = NU
     stop("Please provide the name of the SummarizedExperiment object!", call.=FALSE)
   }
 
+  if(is.null(covariates)){
+    stop("Please provide name(s) of the covariate(s)!", call.=FALSE)
+  }
 
+  if(is.null(confounders)){
+    stop("Please provide name(s) of the confounders!", call.=FALSE)
+  }
 
   # call the internal function that checks the input object is of the same class in all studies.
   typ <- dsBaseClient::ds.class(SumExp, datasources)
@@ -71,8 +77,8 @@ ds.microbiomeIFAA <- function(SumExp = NULL, covariates = NULL, confounders = NU
 
 
   # call the server side function that does the operation
-  cally <- call("microbiomeIFAADS", SumExp, covariates, confounders, sampleIDname, covariatesMany, confoundersMany, nRef, nRefMaxforEsti, taxa, adjust_method,
-                fdrRate, paraJobs, bootB, standardize, sequentialRun, refReadsThresh, taxDropThresh, SDThresh, SDquantilThresh, balanceCut, verbose, seed)
+  cally <- call("microbiomeIFAADS", SumExp, microbVar, covariates, confounders, sampleIDname, covariatesMany, confoundersMany, nRef, nRefMaxforEsti, taxa, adjust_method,
+                fdrRate, paraJobs, bootB, standardize, sequentialRun, refReadsThresh, taxDropThresh, SDThresh, SDquantilThresh, balanceCut, verbose)
   DSI::datashield.aggregate(datasources, cally)
 
 
