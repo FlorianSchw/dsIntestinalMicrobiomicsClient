@@ -17,7 +17,7 @@
 #' @export
 #'
 
-ds.summarizedExperiment <- function(df = NULL, microbiomeData = NULL, covariateData = NULL, newobj = NULL, datasources = NULL){
+ds.summarizedExperiment <- function(microbiomeData = NULL, covariateData = NULL, newobj = NULL, datasources = NULL){
 
 
   # look for DS connections
@@ -32,9 +32,6 @@ ds.summarizedExperiment <- function(df = NULL, microbiomeData = NULL, covariateD
   }
 
 
-  if(is.null(df)){
-    stop("Please provide the name of the data.frame!", call.=FALSE)
-  }
 
 
   if(is.null(microbiomeData)){
@@ -47,14 +44,6 @@ ds.summarizedExperiment <- function(df = NULL, microbiomeData = NULL, covariateD
   }
 
 
-  # call the internal function that checks the input object is of the same class in all studies.
-  typ <- dsBaseClient::ds.class(df, datasources)
-
-
-  # Check whether the input is either of type data frame or matrix
-  if(!('data.frame' %in% typ)){
-    stop("Only objects of type 'data frame' are allowed.", call.=FALSE)
-  }
 
 
   if(is.null(newobj)){
@@ -63,7 +52,7 @@ ds.summarizedExperiment <- function(df = NULL, microbiomeData = NULL, covariateD
 
 
   # call the server side function that does the operation
-  cally <- call("summarizedExperimentDS", df, microbiomeData, covariateData)
+  cally <- call("summarizedExperimentDS", microbiomeData, covariateData)
   DSI::datashield.assign(datasources, newobj, cally)
 
 

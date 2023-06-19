@@ -5,7 +5,6 @@
 \title{Computes the SummarizedExperiment object}
 \usage{
 ds.summarizedExperiment(
-  df = NULL,
   microbiomeData = NULL,
   covariateData = NULL,
   newobj = NULL,
@@ -13,8 +12,6 @@ ds.summarizedExperiment(
 )
 }
 \arguments{
-\item{df}{is a string character of the data.frame}
-
 \item{microbiomeData}{is a string character of a microbiome variable of interest (can also be a vector of microbiome variables)}
 
 \item{covariateData}{is a string character of a covariate variable of interest (can also be a vector of covariates)}
@@ -22,6 +19,8 @@ ds.summarizedExperiment(
 \item{newobj}{is the name of the new object which is created with this function}
 
 \item{datasources}{a list of \code{\link{DSConnection-class}} objects obtained after login}
+
+\item{df}{is a string character of the data.frame}
 }
 \value{
 the object specified by the \code{newobj} argument of \code{ds.summarizedExperiment} or default name \code{sumExp.newobj}

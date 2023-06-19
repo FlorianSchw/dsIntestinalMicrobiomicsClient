@@ -34,10 +34,10 @@
 #' @export
 #'
 
-ds.microbiomeIFAA <- function(SumExp = NULL, microbVar = "all", testCov = NULL, ctrlCov = NULL, sampleIDname = NULL, testMany = TRUE, ctrlMany = FALSE,
+ds.microbiomeIFAA_Test <- function(SumExp = NULL, microbVar = "all", testCov = NULL, ctrlCov = NULL, sampleIDname = NULL, testMany = TRUE, ctrlMany = FALSE,
                               nRef = 40, nRefMaxForEsti = 2, refTaxa = NULL, adjust_method = "BY", fdrRate = 0.15, paraJobs = NULL, bootB = 500,
                               standardize = FALSE, sequentialRun = FALSE, refReadsThresh = 0.2, taxDropThresh = 0, SDThresh = 0.05, SDquantilThresh = 0,
-                              balanceCut = 0.2, verbose = TRUE, type = c("split", "pooled"), datasources = NULL){
+                              balanceCut = 0.2, verbose = TRUE, nRef_smaller = NULL, refTaxa_smaller = NULL, type = c("split", "pooled"), datasources = NULL){
 
 
   # look for DS connections
@@ -327,284 +327,59 @@ ds.microbiomeIFAA <- function(SumExp = NULL, microbVar = "all", testCov = NULL, 
     while_loop_ind <- FALSE
     loop_num <- 0
 
-    nRef_smaller_num <- nRef_smaller
+    fin_ref_1 <- selectRegroup$finalIndpRefTax
+    ref_taxa_1 <- selectRegroup$refTaxa
+
+    refTaxa_smaller <- head(names(selectRegroup$goodIndpRefTaxWithCount), n = nRef_smaller)
+
     nRef_smaller <- paste0(as.character(nRef_smaller))
+    refTaxa_smaller <- paste0(as.character(refTaxa_smaller), collapse = ",")
 
-    #### potential for an internal function? it is roughly the same procedure as above
+    #### here starts the long section
 
-    while (while_loop_ind == FALSE) {
-      if (loop_num >= 2) {
-        break
-      }
-      loop_num <- loop_num + 1
+    # call the server side function that does the operation
+    callz <- call("microbiomeIFAAPooledDS2",
+                  SumExp,
+                  microbVar,
+                  testCov,
+                  ctrlCov,
+                  sampleIDname,
+                  testMany,
+                  ctrlMany,
+                  nRef,
+                  nRefMaxForEsti,
+                  refTaxa,
+                  adjust_method,
+                  fdrRate,
+                  paraJobs,
+                  bootB,
+                  standardize,
+                  sequentialRun,
+                  refReadsThresh,
+                  taxDropThresh,
+                  SDThresh,
+                  SDquantilThresh,
+                  balanceCut,
+                  verbose,
+                  nRef_smaller,
+                  refTaxa_smaller)
 
-      refTaxa_smaller <- head(names(selectRegroup$goodIndpRefTaxWithCount), n = nRef_smaller_num)
-      refTaxa_smaller <- paste0(as.character(refTaxa_smaller), collapse = ",")
+    outcome2 <- DSI::datashield.aggregate(datasources, callz)
 
-      fin_ref_1 <- selectRegroup$finalIndpRefTax
-      ref_taxa_1 <- selectRegroup$refTaxa
 
-      #### here starts the long section
 
-      # call the server side function that does the operation
-      callz <- call("microbiomeIFAAPooledDS2", SumExp, microbVar, testCov, ctrlCov, sampleIDname, testMany, ctrlMany, nRef, nRefMaxForEsti, refTaxa, adjust_method,
-                    fdrRate, paraJobs, bootB, standardize, sequentialRun, refReadsThresh, taxDropThresh, SDThresh, SDquantilThresh, balanceCut, verbose, nRef_smaller, refTaxa_smaller)
-      outcome_while <- DSI::datashield.aggregate(datasources, callz)
 
+    outcome3 <- list(nRef_smaller,
+                     refTaxa_smaller)
 
-      XTX_comb_list <- list()
-      Xy_comb_list <- list()
-      yy_comb_list <- list()
-      dfr_comb_list <- list()
 
-      results <- list()
-      results_origD <- list()
-      selectRegroup <- list()
-      selecList <- list()
-      estList <- list()
 
-      #### hard coded nRuns for now
 
-      for (k in 1:length(outcome_while[[1]]$analysisResults)){
-        for (q in 1:length(datasources)){
 
-          XTX_comb_list[[q]] <- outcome_while[[q]][["analysisResults"]][[k]][[1]][[1]]
-          Xy_comb_list[[q]] <- outcome_while[[q]][["analysisResults"]][[k]][[1]][[2]]
-          yy_comb_list[[q]] <- outcome_while[[q]][["analysisResults"]][[k]][[1]][[3]]
-          dfr_comb_list[[q]] <- outcome_while[[q]][["analysisResults"]][[k]][[1]][[5]]
-
-        }
-
-        XTX_comb <- Reduce('+', XTX_comb_list)
-        Xy_comb <- Reduce('+', Xy_comb_list)
-        yy_comb <- Reduce('+', yy_comb_list)
-        dfr_comb <- Reduce('+', dfr_comb_list)
-
-        nvar <- outcome_while[[1]][["analysisResults"]][[k]][[1]][[4]]
-        keep <- outcome_while[[1]][["analysisResults"]][[k]][[1]][[6]]
-        xnames <- outcome_while[[1]][["analysisResults"]][[k]][[1]][[7]]
-        intercept <- outcome_while[[1]][["analysisResults"]][[k]][[1]][[8]]
-        nPredics <- outcome_while[[1]][["analysisResults"]][[k]][[1]][[9]]
-        fwerRate <- outcome_while[[1]][["analysisResults"]][[k]][[1]][[10]]
-        nRuns <- outcome_while[[1]][["analysisResults"]][[k]][[1]][[11]]
-        nAlphaSelec <- outcome_while[[1]][["analysisResults"]][[k]][[1]][[12]]
-        nAlphaNoInt <- outcome_while[[1]][["analysisResults"]][[k]][[1]][[13]]
-        nTaxa <- outcome_while[[1]][["analysisResults"]][[k]][[1]][[14]]
-        ii <- outcome_while[[1]][["analysisResults"]][[k]][[1]][[15]]
-        testCovInd <- outcome_while[[1]][["analysisResults"]][[k]][[1]][[16]]
-        taxaNames <- outcome_while[[1]][["analysisResults"]][[k]][[1]][[17]]
-        goodRefTaxaCandi <- outcome_while[[1]][["analysisResults"]][[k]][[1]][[18]]
-        refTaxa_DS <- outcome_while[[1]][["analysisResults"]][[k]][[1]][[19]]
-
-
-
-        coef_ds   <- Matrix::solve(XTX_comb, Xy_comb, tol = 1e-7)
-
-        coefficients_ds <- rep(NA, nvar)
-        coefficients_ds <- round(coef_ds@x,6)
-
-        RSS_ds <- yy_comb - 2 * MatrixExtra::crossprod(coef_ds, Xy_comb) + MatrixExtra::crossprod(coef_ds, MatrixExtra::crossprod(XTX_comb, coef_ds))
-
-        var_res_ds <- as.numeric(RSS_ds)/(dfr_comb + 2*nvar)
-
-        se_coef_ds <- rep(NA, nvar)
-        inv_ds     <- Matrix::solve(XTX_comb, diag(nrow(XTX_comb)), tol = 1e-7)
-
-        se_coef_ds[keep] <- sqrt(var_res_ds * Matrix::diag(inv_ds))
-        t1            <- coefficients_ds/se_coef_ds
-        p             <- 2 * pt(abs(t1), df = dfr_comb, lower.tail = FALSE)
-
-
-
-        coefMat<-data.frame(estimate  = coefficients_ds,
-                            std.error = se_coef_ds,
-                            t = t1,
-                            p.value   = p)
-        if(length(xnames)>0){
-          if(intercept) xnames[1] <- "intercept"
-          row.names(coefMat) <- xnames
-        }else
-        {if(intercept) row.names(coefMat) <- c("intercept",seq(nvar-1))
-        }
-
-
-
-        bootResu <- coefMat
-
-
-        p_value_est<-bootResu[,4]
-        p_value_est_noint<-p_value_est[-seq(1,length(p_value_est),by=(nPredics+1))]
-        p_value_est_noint_adj<-p.adjust(p_value_est_noint,adjust_method)
-        p_value_est_noint_adj[is.na(p_value_est_noint_adj)]<-1
-
-        coef_est<-abs(bootResu[,1])
-        coef_est_noint<-coef_est[-seq(1,length(coef_est),by=(nPredics+1))]
-        coef_est_noint[is.na(coef_est_noint)]<-max(coef_est_noint,na.rm = TRUE)
-
-
-        # return
-        results$betaNoInt=p_value_est_noint_adj<fwerRate
-        results$betaInt=p_value_est
-        results$coef_est_noint=coef_est_noint
-
-
-        #### originDataScreen part
-
-        BetaNoInt.k <- 0 + (results$betaNoInt != 0)
-        EstNoInt.k <- abs(results$coef_est_noint)
-
-
-        #### the nRuns check below is the last bit of the nRuns loop in originDataScreen
-        #### nRuns is not properly coded yet to work with nRuns > 1
-        if (nRuns == 1) {
-          BetaNoInt.i <- BetaNoInt.k
-          EstNoInt.i <- EstNoInt.k
-        }
-        if (nRuns > 1) {
-          BetaNoInt.i <- BetaNoInt.i + BetaNoInt.k
-          EstNoInt.i <- EstNoInt.i + EstNoInt.k
-        }
-
-
-        BetaNoInt.i <- BetaNoInt.i / nRuns
-        EstNoInt.i <- EstNoInt.i / nRuns
-
-
-        selection.i <- rep(0, nAlphaSelec)
-        coef.i <- rep(0, nAlphaSelec)
-
-        if (ii == 1) {
-          selection.i[-seq(1, nPredics)] <- BetaNoInt.i
-          coef.i[-seq(1, nPredics)] <- EstNoInt.i
-        }
-
-        if (ii == nTaxa) {
-          selection.i[-seq((nAlphaSelec - nPredics + 1), nAlphaSelec)] <- BetaNoInt.i
-          coef.i[-seq((nAlphaSelec - nPredics + 1), nAlphaSelec)] <- EstNoInt.i
-        }
-
-        if ((ii > 1) & (ii < nTaxa)) {
-          selection.i[seq_len((nPredics * (ii - 1)))] <- BetaNoInt.i[seq_len((nPredics * (ii - 1)))]
-          selection.i[(nPredics * ii + 1):nAlphaSelec] <- BetaNoInt.i[(nPredics * (ii - 1) + 1):nAlphaNoInt]
-          coef.i[seq_len((nPredics * (ii - 1)))] <- EstNoInt.i[seq_len((nPredics * (ii - 1)))]
-          coef.i[(nPredics * ii + 1):nAlphaSelec] <- EstNoInt.i[(nPredics * (ii - 1) + 1):nAlphaNoInt]
-        }
-
-
-        selecList[[k]] <- selection.i
-        estList[[k]] <- coef.i
-
-        #### loop for each taxa ends below
-
-      }
-
-      scr1ResuSelec <- DescTools::DoCall(cbind, selecList)
-      scr1ResuEst <- DescTools::DoCall(cbind, estList)
-
-
-
-      # create count of selection for individual testCov
-      countOfSelecForAllPred <- matrix(rowSums(scr1ResuSelec), nrow = nPredics)
-      EstOfAllPred <- matrix(rowMeans(scr1ResuEst), nrow = nPredics)
-
-      testCovCountMat <- countOfSelecForAllPred[testCovInd, , drop = FALSE]
-      testEstMat <- EstOfAllPred[testCovInd, , drop = FALSE]
-
-
-      # create overall count of selection for all testCov as a whole
-      countOfSelecForAPred <- matrix(colSums(testCovCountMat), nrow = 1)
-      estOfSelectForAPred <- matrix(colSums(testEstMat), nrow = 1)
-
-      colnames(countOfSelecForAPred) <- taxaNames
-      colnames(estOfSelectForAPred) <- taxaNames
-
-
-      #### runScrParal part
-
-      results_origD$testCovCountMat <- testCovCountMat
-      results_origD$testEstMat <- testEstMat
-      results_origD$countOfSelecForAPred <- countOfSelecForAPred
-      results_origD$estOfSelectForAPred <- estOfSelectForAPred
-
-      nTestCov <- length(testCovInd)
-      results_origD$nTestCov <- nTestCov
-      results_origD$nTaxa <- nTaxa
-      results_origD$nPredics <- nPredics
-
-      results_origD$taxaNames <- taxaNames
-      results_origD$refTaxa <- refTaxa_DS
-      results_origD$goodRefTaxaCandi <- goodRefTaxaCandi
-
-
-
-
-      #### getScrResu part
-      #### can probably be shortened a lot
-
-
-
-      selectRegroup$refTaxa <- results_origD$refTaxa
-
-
-      if (nTestCov == 1) {
-        selectRegroup$selecCountMatIndv <- results_origD$countOfSelecForAPred
-        selectRegroup$selecEstMatIndv <- results_origD$estOfSelectForAPred
-      }
-
-      if (nTestCov > 1) {
-        selectRegroup$selecCountMatIndv <- results_origD$testCovCountMat
-        selectRegroup$selecEstMatIndv <- results_origD$testEstMat
-
-      }
-
-      goodIndpRefTaxWithCount <- results_origD$countOfSelecForAPred[1, (colnames(results_origD$countOfSelecForAPred) %in% goodRefTaxaCandi)]
-      goodIndpRefTaxWithEst <- results_origD$estOfSelectForAPred[1, (colnames(results_origD$estOfSelectForAPred) %in% goodRefTaxaCandi)]
-
-      restRefTaxWithCount <- results_origD$countOfSelecForAPred[1, !(colnames(results_origD$countOfSelecForAPred) %in% goodRefTaxaCandi)]
-      restRefTaxWithEst <- results_origD$estOfSelectForAPred[1, !(colnames(results_origD$estOfSelectForAPred) %in% goodRefTaxaCandi)]
-
-      sort_goodIndpRefTaxWithCount <- goodIndpRefTaxWithCount[order(goodIndpRefTaxWithCount, abs(goodIndpRefTaxWithEst))]
-      sort_goodIndpRefTaxWithEst <- abs(goodIndpRefTaxWithEst[order(goodIndpRefTaxWithCount, abs(goodIndpRefTaxWithEst))])
-
-      sort_restRefTaxWithCount <- restRefTaxWithCount[order(restRefTaxWithCount, abs(restRefTaxWithEst))]
-      sort_restRefTaxWithEst <- abs(restRefTaxWithEst[order(restRefTaxWithCount, abs(restRefTaxWithEst))])
-
-
-      selectRegroup$finalIndpRefTax <- names(c(sort_goodIndpRefTaxWithCount, sort_restRefTaxWithCount))[seq_len(2)]
-
-      selectRegroup$selecCountOverall <- results_origD$countOfSelecForAPred
-
-      selectRegroup$goodIndpRefTaxWithCount <- c(sort_goodIndpRefTaxWithCount, sort_restRefTaxWithCount)
-      selectRegroup$goodIndpRefTaxWithEst <- c(sort_goodIndpRefTaxWithEst, sort_restRefTaxWithEst)
-
-      selectRegroup$goodRefTaxaCandi <- goodRefTaxaCandi
-
-      #### here ends the long section
-
-
-      fin_ref_2 <- selectRegroup$finalIndpRefTax
-      ref_taxa_2 <- selectRegroup$refTaxa
-      while_loop_ind <- identical(fin_ref_1, fin_ref_2) || identical(ref_taxa_1, ref_taxa_2)
-
-      if (while_loop_ind == FALSE) {
-        message("Looping for DS IFAA part1 still ongoing.")
-      }
-      if (while_loop_ind == TRUE) {
-        message("Looping for DS IFAA part1 done.")
-      }
-    }
-
-
-
-
-
-
-
-
-  #### type = pooled ends below
+    #### type = pooled ends below
   }
 
-  return(selectRegroup)
+  return(outcome2)
 
 }
 

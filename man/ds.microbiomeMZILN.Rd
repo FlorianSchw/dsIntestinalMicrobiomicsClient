@@ -6,22 +6,53 @@
 \usage{
 ds.microbiomeMZILN(
   SumExp = NULL,
-  taxa = NULL,
-  covariates = NULL,
+  microbVar = NULL,
+  refTaxa = NULL,
+  allCov = NULL,
+  sampleIDname = NULL,
+  adjust_method = "BY",
+  fdrRate = 0.15,
+  paraJobs = NULL,
+  bootB = 500,
+  taxDropThresh = 0,
+  standardize = FALSE,
+  sequentialRun = TRUE,
+  verbose = TRUE,
+  type = c("split", "pooled"),
   datasources = NULL
 )
 }
 \arguments{
 \item{SumExp}{is a string character describing the SummarizedExperiment object}
 
+\item{sampleIDname}{is a string character for the sample ID variable.}
+
+\item{adjust_method}{The adjusting method for p value adjustment. Default is "BY" for dependent FDR adjustment. It can take any adjustment method for the p.adjust function in R.}
+
+\item{fdrRate}{The false discovery rate for identifying taxa/OTU/ASV associated with 'covariates'.}
+
+\item{paraJobs}{If 'sequentialRun' is FALSE, this specifies the number of parallel jobs that will be registered to run the algoithm. If specified as NULL, it will automatically detect the cores to decide the number of parallel jobs.}
+
+\item{bootB}{Number of bootstrap samples for obtaining confidence interval of estimates for the high dimensional regression.Default is 500.}
+
+\item{taxDropThresh}{The threshold of number of non-zero sequencing reads for each taxon to be dropped from the analysis. Default is 0 which means that taxon without any sequencing reads will be dropped from the analysis.}
+
+\item{standardize}{is a logical. If TRUE, the design matrix for X will be standardized in the analyses and the results. Default is FALSE.}
+
+\item{sequentialRun}{is a logical. Default is TRUE. It can be set to be FALSE to increase speed if there are multiple taxa in the argument 'taxa'.}
+
+\item{verbose}{Whether the process message is printed out to the console. Default is TRUE.}
+
+\item{datasources}{a list of \code{\link{DSConnection-class}} objects obtained after login}
+
 \item{taxa}{is a string character for the microbiome variable denominator (can also be a vector of microbiome variables)}
 
 \item{covariates}{is a string character of covariates to be examined along the microbiome variables (can also be a vector of covariates).}
 
-\item{datasources}{a list of \code{\link{DSConnection-class}} objects obtained after login}
+\item{seed}{Random seed for reproducibility. Can be set to NULL to remove seeding.}
 }
 \value{
-XXXXX
+\code{ds.microbiomeMZILN} returns the outcome of the specified multivariate zero-inflated logistic normal model
 }
 \description{
 This function is similar to the native R function from the IFAA package
