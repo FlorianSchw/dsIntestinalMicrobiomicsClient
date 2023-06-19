@@ -77,7 +77,7 @@ ds.microbiomeMZILN <- function(SumExp = NULL,
 
       # call the server side function that does the operation
       cally <- call("microbiomeMZILNDS", SumExp, microbVar, refTaxa, allCov, sampleIDname, adjust_method, fdrRate, paraJobs, bootB, taxDropThresh, standardize, sequentialRun, verbose)
-      outcome <- DSI::datashield.aggregate(datasources, cally)
+      output_obj <- DSI::datashield.aggregate(datasources, cally)
 
   }
 
@@ -413,8 +413,7 @@ ds.microbiomeMZILN <- function(SumExp = NULL,
                                  Results.sig_ind,
                                  Results.FDR,
                                  Results.Adjust_Method,
-                                 Results.Boots,
-                                 as.list(Results.Final_Ref_Taxon))
+                                 Results.Boots)
 
 
   }
