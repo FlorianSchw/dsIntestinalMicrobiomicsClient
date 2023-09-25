@@ -137,6 +137,7 @@ ds.microbiomeIFAA <- function(SumExp = NULL, microbVar = "all", testCov = NULL, 
       taxaNames <- outcome[[1]][["analysisResults"]][[k]][[1]][[17]]
       goodRefTaxaCandi <- outcome[[1]][["analysisResults"]][[k]][[1]][[18]]
       refTaxa_DS <- outcome[[1]][["analysisResults"]][[k]][[1]][[19]]
+      microbName <- outcome[[1]][["MicrobName"]]
 
 
 
@@ -595,6 +596,434 @@ ds.microbiomeIFAA <- function(SumExp = NULL, microbVar = "all", testCov = NULL, 
     }
 
 
+    ##################################
+    ##################################
+    ##################################
+    #### Here starts Code between 1st part of check and the computation part of the regulariz internal function
+
+
+    results_regulariz <- list()
+    results_regulariz$goodRefTaxaCandi <- goodRefTaxaCandi
+
+
+    results_regulariz$selecCountOverall <- selectRegroup$selecCountOverall
+    microbName_ind <- vapply(colnames(results_regulariz$selecCountOverall), function(x) {
+        which(taxaNames %in% x)
+      }, FUN.VALUE = 1)
+
+    colnames(results_regulariz$selecCountOverall) <- microbName[microbName_ind]
+
+    results_regulariz$selecCountMatIndv <- selectRegroup$selecCountMatIndv
+    finalIndpRefTax <- microbName[taxaNames %in% (selectRegroup$finalIndpRefTax)]
+
+    results_regulariz$goodIndpRefTaxWithCount <- selectRegroup$goodIndpRefTaxWithCount
+    names(results_regulariz$goodIndpRefTaxWithCount) <- microbName[unlist(lapply(names(selectRegroup$goodIndpRefTaxWithCount), function(x) {
+        which(taxaNames %in% x)
+      }))]
+
+    results_regulariz$goodIndpRefTaxWithEst <- selectRegroup$goodIndpRefTaxWithEst
+    names(results_regulariz$goodIndpRefTaxWithEst) <- microbName[unlist(lapply(names(selectRegroup$goodIndpRefTaxWithEst), function(x) {
+        which(taxaNames %in% x)
+      }))]
+
+    results_regulariz$goodRefTaxaCandi <- microbName[taxaNames %in% (selectRegroup$goodRefTaxaCandi)]
+    results_regulariz$randomRefTaxa <- microbName[taxaNames %in% (selectRegroup$refTaxa)]
+
+    goodIndpRefTaxNam <- names(results_regulariz$goodIndpRefTaxWithCount)
+
+
+
+    results_regulariz$finalIndpRefTax <- finalIndpRefTax
+
+
+    finalIndpRefTax <- paste0(as.character(finalIndpRefTax), collapse = ",")
+    goodIndpRefTaxNam <- paste0(as.character(goodIndpRefTaxNam), collapse = ",")
+
+    ################################################
+    ################################################
+    ################################################
+    ################################################
+    #### calling the server-side again to check for the balanced / unbalanced data objects ####
+
+
+    calla <- call("microbiomeIFAAPooledDS3", SumExp, microbVar, testCov, ctrlCov, sampleIDname, testMany, ctrlMany, nRef, nRefMaxForEsti, refTaxa, adjust_method,
+                  fdrRate, paraJobs, bootB, standardize, sequentialRun, refReadsThresh, taxDropThresh, SDThresh, SDquantilThresh, balanceCut, verbose, finalIndpRefTax, goodIndpRefTaxNam)
+    outcome_part3 <- DSI::datashield.aggregate(datasources, calla)
+
+
+
+
+    #### After receiving all the necessary objects computing final results and
+
+
+
+
+
+
+
+
+
+
+    #### from different section
+    intermediate_results <- list()
+
+    #### k stands for selected microbiome
+
+
+    XTX_comb_list <- list()
+    Xy_comb_list <- list()
+    yy_comb_list <- list()
+    dfr_comb_list <- list()
+
+    results <- list()
+    results$estiList <- list()
+
+    for (k in 1:length(outcome_part3[[1]]$analysisResults$estiList)){
+      for (q in 1:length(datasources)){
+
+        XTX_comb_list[[q]] <- outcome_part3[[q]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[1]]
+        Xy_comb_list[[q]] <- outcome_part3[[q]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[2]]
+        yy_comb_list[[q]] <- outcome_part3[[q]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[3]]
+        dfr_comb_list[[q]] <- outcome_part3[[q]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[5]]
+      }
+
+      XTX_comb <- Reduce('+', XTX_comb_list)
+      Xy_comb <- Reduce('+', Xy_comb_list)
+      yy_comb <- Reduce('+', yy_comb_list)
+      dfr_comb <- Reduce('+', dfr_comb_list)
+
+      nvar <- outcome_part3[[1]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[4]]
+      keep <- outcome_part3[[1]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[6]]
+      xnames <- outcome_part3[[1]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[7]]
+      intercept <- outcome_part3[[1]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[8]]
+      originRefTaxNam <- outcome_part3[[1]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[9]]
+      testCovInOrder <- outcome_part3[[1]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[10]]
+      nRuns <- outcome_part3[[1]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[11]]
+      taxa_sepname_list <- outcome_part3[[1]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[12]]
+      nPredics <- outcome_part3[[1]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[13]]
+      i <- outcome_part3[[1]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[14]]
+      microbName <- outcome_part3[[1]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[15]]
+      unbalanceTaxa_ori_name <- outcome_part3[[1]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[16]]
+      unbalancePred_ori_name <- outcome_part3[[1]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[17]]
+      fwerRate <- outcome_part3[[1]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[18]]
+
+      coef_ds   <- Matrix::solve(XTX_comb, Xy_comb, tol = 1e-7)
+
+      coefficients_ds <- rep(NA, nvar)
+      coefficients_ds <- round(coef_ds@x,6)
+
+      RSS_ds <- yy_comb - 2 * MatrixExtra::crossprod(coef_ds, Xy_comb) + MatrixExtra::crossprod(coef_ds, MatrixExtra::crossprod(XTX_comb, coef_ds))
+
+      var_res_ds <- as.numeric(RSS_ds)/(dfr_comb + 2*nvar)
+
+      se_coef_ds <- rep(NA, nvar)
+      inv_ds     <- Matrix::solve(XTX_comb, diag(nrow(XTX_comb)), tol = 1e-7)
+
+      se_coef_ds[keep] <- sqrt(var_res_ds * Matrix::diag(inv_ds))
+      t1            <- coefficients_ds/se_coef_ds
+      p             <- 2 * pt(abs(t1), df = dfr_comb, lower.tail = FALSE)
+
+
+
+      coefMat<-data.frame(estimate  = coefficients_ds,
+                          std.error = se_coef_ds,
+                          t = t1,
+                          p.value   = p)
+      if(length(xnames)>0){
+        if(intercept) xnames[1] <- "intercept"
+        row.names(coefMat) <- xnames
+      }else
+      {if(intercept) row.names(coefMat) <- c("intercept",seq(nvar-1))
+      }
+
+
+      bootResu_k <- coefMat
+
+      fin_ref_taxon_name <- originRefTaxNam
+      nTestcov <- length(testCovInOrder)
+
+
+      boot_est <- bootResu_k[, 1] / nRuns
+      se_est_all <- bootResu_k[, 2] / nRuns
+
+
+
+      ref_taxon_name <- originRefTaxNam
+      p_value_save_mat <- matrix(nrow = nTestcov, ncol = (length(taxa_sepname_list[[i]]) - 1))
+      est_save_mat <- matrix(nrow = nTestcov, ncol = (length(taxa_sepname_list[[i]]) - 1))
+      CI_up_mat <- matrix(nrow = nTestcov, ncol = (length(taxa_sepname_list[[i]]) - 1))
+      CI_low_mat <- matrix(nrow = nTestcov, ncol = (length(taxa_sepname_list[[i]]) - 1))
+      se_mat <- matrix(nrow = nTestcov, ncol = (length(taxa_sepname_list[[i]]) - 1))
+
+      adjust_method = "BY"
+
+      for (ii in seq_len(nTestcov)) {
+        se_est <- se_est_all[seq(ii + 1, length(se_est_all), nPredics + 1)]
+        boot_est_par <- boot_est[seq(ii + 1, length(boot_est), nPredics + 1)]
+
+        p_value_unadj <- (1 - pnorm(abs(boot_est_par / se_est))) * 2
+
+        boot_est_CI_low <- boot_est_par - 1.96 * se_est
+        boot_est_CI_up <- boot_est_par + 1.96 * se_est
+
+        p_value_adj <- p.adjust(p_value_unadj, adjust_method)
+
+        p_value_save_mat[ii, ] <- p_value_unadj
+        est_save_mat[ii, ] <- boot_est_par
+        CI_low_mat[ii, ] <- boot_est_CI_low
+        CI_up_mat[ii, ] <- boot_est_CI_up
+        se_mat[ii, ] <- se_est
+
+      }
+
+      rownames(p_value_save_mat) <- testCovInOrder
+      rownames(est_save_mat) <- testCovInOrder
+      rownames(CI_low_mat) <- testCovInOrder
+      rownames(CI_up_mat) <- testCovInOrder
+      rownames(se_mat) <- testCovInOrder
+
+      ref_taxon_name <- originRefTaxNam
+      colname_use <- microbName[microbName != ref_taxon_name]
+      colnames(p_value_save_mat) <- colname_use
+      colnames(est_save_mat) <- colname_use
+      colnames(CI_low_mat) <- colname_use
+      colnames(CI_up_mat) <- colname_use
+      colnames(se_mat) <- colname_use
+
+
+      if (length(unbalanceTaxa_ori_name) > 0) {
+        est_save_mat[cbind(unbalancePred_ori_name, unbalanceTaxa_ori_name)] <- NA
+        CI_low_mat[cbind(unbalancePred_ori_name, unbalanceTaxa_ori_name)] <- NA
+        CI_up_mat[cbind(unbalancePred_ori_name, unbalanceTaxa_ori_name)] <- NA
+        se_mat[cbind(unbalancePred_ori_name, unbalanceTaxa_ori_name)] <- NA
+        p_value_save_mat[cbind(unbalancePred_ori_name, unbalanceTaxa_ori_name)] <- NA
+      }
+
+      sig_ind <- which(p_value_save_mat < fwerRate, arr.ind = TRUE, useNames = FALSE)
+      est_sig <- est_save_mat[sig_ind]
+      CI_low_sig <- CI_low_mat[sig_ind]
+      CI_up_sig <- CI_up_mat[sig_ind]
+      p_adj_sig <- p_value_save_mat[sig_ind]
+      se_sig <- se_mat[sig_ind]
+
+
+      cov_sig_index <- sort(unique(sig_ind[, 1]))
+      sig_list_each <- list()
+      if (length(cov_sig_index) > 0) {
+        for (iii in seq_len(length(cov_sig_index))) {
+          sig_loc <- which(sig_ind[, 1] == cov_sig_index[iii])
+          est_spe_cov <- est_sig[sig_loc]
+          CI_low_spe_cov <- CI_low_sig[sig_loc]
+          CI_up_spe_cov <- CI_up_sig[sig_loc]
+          p_adj_spe_cov <- p_adj_sig[sig_loc]
+          se_spe_cov <- se_sig[sig_loc]
+          cov_sig_mat <- matrix(nrow = length(sig_loc), ncol = 5)
+          colnames(cov_sig_mat) <-
+            c("estimate", "SE est", "CI low", "CI up", "adj p-value")
+          cov_sig_mat[, 1] <- est_spe_cov
+          cov_sig_mat[, 2] <- se_spe_cov
+          cov_sig_mat[, 3] <- CI_low_spe_cov
+          cov_sig_mat[, 4] <- CI_up_spe_cov
+          cov_sig_mat[, 5] <- p_adj_spe_cov
+          rownames(cov_sig_mat) <- colname_use[sig_ind[sig_loc, 2]]
+          sig_list_each[[testCovInOrder[cov_sig_index[iii]]]] <-
+            cov_sig_mat
+        }
+      }
+      all_cov_list <- list()
+
+
+      all_cov_list$est_save_mat <- est_save_mat
+      all_cov_list$p_value_save_mat <- p_value_save_mat
+      all_cov_list$CI_low_mat <- CI_low_mat
+      all_cov_list$CI_up_mat <- CI_up_mat
+      all_cov_list$se_mat <- se_mat
+
+
+      current_name <- names(outcome_part3[[1]]$analysisResults$estiList[k])
+
+
+
+      results$estiList[[current_name]]$sig_list_each <- sig_list_each
+      results$estiList[[current_name]]$all_cov_list <- all_cov_list
+
+
+    }
+
+
+
+
+
+    #### objects for regulariz + MZILN part of MZILN
+
+    sub_taxa <- microbVar
+    nSub <- outcome_part3[[1]]$analysisResults$nSub
+    nTaxa <- outcome_part3[[1]]$analysisResults$nTaxa
+    #covariatesData <- outcome_part3[[1]]$covariatesData
+    linkIDname <- outcome_part3[[1]]$linkIDname
+
+
+    #### regulariz starts here
+    #### there need to be a few changes
+
+    fin_ref_taxon_name <- names(results$estiList)
+    all_cov_list_sep <- list()
+
+    for (i in seq_len(length(fin_ref_taxon_name))) {
+      save_list_temp <- results$estiList[[i]]$all_cov_list
+      rearrage_res_list <- list()
+      for (j in testCovInOrder) {
+        est_res_save_all <-
+          cbind(
+            save_list_temp$est_save_mat[j,],
+            save_list_temp$se_mat[j,],
+            save_list_temp$CI_low_mat[j,],
+            save_list_temp$CI_up_mat[j,],
+            save_list_temp$p_value_save_mat[j,]
+          )
+        est_res_save_all <-
+          data.frame(fin_ref_taxon_name[i],
+                     rownames(est_res_save_all),
+                     j,
+                     est_res_save_all)
+
+        colnames(est_res_save_all) <-
+          c("ref_tax",
+            "taxon",
+            "cov",
+            "estimate",
+            "SE est",
+            "CI low",
+            "CI up",
+            "adj p-value")
+
+        rearrage_res_list[[j]] <- est_res_save_all
+
+      }
+
+      unorder_long <- DescTools::DoCall("rbind", rearrage_res_list)
+      all_cov_list_sep[[fin_ref_taxon_name[i]]] <- data.frame(unorder_long[stringr::str_order(unorder_long[, c("taxon")], decreasing = FALSE, numeric = TRUE),], row.names = NULL)
+    }
+
+    message("Sig_Ind here1")
+
+    all_cov_list_sep <- DescTools::DoCall("rbind", all_cov_list_sep)
+    rownames(all_cov_list_sep) <- NULL
+    all_cov_list_sep$sig_ind <- all_cov_list_sep$adj.p.value < fwerRate
+    results$all_cov_list_sep <- S4Vectors::DataFrame(all_cov_list_sep)
+
+
+
+    all_cov_list <- list()
+
+    for (i in seq_len(length(fin_ref_taxon_name))) {
+      all_cov_list[[fin_ref_taxon_name[i]]] <-
+        results$estiList[[i]]$all_cov_list
+    }
+    results$all_cov_list <- all_cov_list
+
+
+    ref_taxon_name <- names(all_cov_list)
+
+    exclu_1 <- !colnames(all_cov_list[[1]]$est_save_mat) %in% ref_taxon_name[2]
+    exclu_2 <- !colnames(all_cov_list[[2]]$est_save_mat) %in% ref_taxon_name[1]
+
+
+    est_save_mat_mean <- (all_cov_list[[1]]$est_save_mat[, exclu_1, drop = FALSE] + all_cov_list[[2]]$est_save_mat[, exclu_2, drop = FALSE]) / 2
+    se_mat_mean <- (all_cov_list[[1]]$se_mat[, exclu_1, drop = FALSE] + all_cov_list[[2]]$se_mat[, exclu_2, drop = FALSE]) / 2
+    CI_low_mat_mean <- (all_cov_list[[1]]$CI_low_mat[, exclu_1, drop = FALSE] + all_cov_list[[2]]$CI_low_mat[, exclu_2, drop = FALSE]) / 2
+    CI_up_mat_mean <- (all_cov_list[[1]]$CI_up_mat[, exclu_1, drop = FALSE] + all_cov_list[[2]]$CI_up_mat[, exclu_2, drop = FALSE]) / 2
+
+
+    p_value_unadj_mean <- t(apply(est_save_mat_mean / se_mat_mean, 1, function(x) {
+        (1 - pnorm(abs(x))) * 2
+      }))
+    p_value_adj_mean <- t(apply(p_value_unadj_mean, 1, function(x) {
+        p.adjust(x, method = adjust_method)
+      }))
+    colname_use <- colnames(est_save_mat_mean)
+
+    message("Sig_Ind here2")
+
+    sig_ind <- which(p_value_adj_mean <= fwerRate, arr.ind = TRUE, useNames = FALSE)
+
+
+    full_results <- list()
+    for (j in testCovInOrder) {
+      est_res_save_all <-
+        data.frame(
+          colname_use,
+          j,
+          est_save_mat_mean[j, ],
+          se_mat_mean[j, ],
+          CI_low_mat_mean[j, ],
+          CI_up_mat_mean[j, ],
+          p_value_unadj_mean[j, ],
+          p_value_adj_mean[j, ],
+          row.names = NULL
+        )
+      colnames(est_res_save_all) <-
+        c(
+          "taxon",
+          "cov",
+          "estimate",
+          "SE est",
+          "CI low",
+          "CI up",
+          "unadj p-value",
+          "adj p-value"
+        )
+      fin_ref_taxon_dat <-
+        data.frame(
+          taxon = fin_ref_taxon_name,
+          cov = j,
+          estimate = 0,
+          SE.est = NA,
+          CI.low = NA,
+          CI.up = NA,
+          unadj.p.value = 1,
+          adj.p.value = 1
+        )
+
+      res <- rbind(data.frame(est_res_save_all), fin_ref_taxon_dat)
+
+      if (any(sub_taxa!="all")) {
+        res <- res[res$taxon %in% sub_taxa, , drop = FALSE]
+        res$adj.p.value <- p.adjust(res$unadj.p.value, method = adjust_method)
+      }
+
+      full_results[[j]] <- res
+    }
+
+    message("Sig_Ind here3")
+
+
+    full_results <- DescTools::DoCall("rbind", full_results)
+    rownames(full_results) <- NULL
+    full_results <- full_results[stringr::str_order(full_results$taxon,
+                                                    decreasing = FALSE,
+                                                    numeric = TRUE), ]
+    full_results$sig_ind <- full_results$adj.p.value < fwerRate
+    full_results$sig_ind[is.na(full_results$sig_ind)] <- FALSE
+    results$full_results <- S4Vectors::DataFrame(full_results)
+
+    results$nTaxa <- nTaxa
+    results$nPredics <- nPredics
+    results$fin_ref_taxon_name <- fin_ref_taxon_name
+
+    rm(data)
+
+    # return results
+
+    results$nRef <- nRef
+
+
+
+
+
+
+
+
 
 
 
@@ -604,7 +1033,7 @@ ds.microbiomeIFAA <- function(SumExp = NULL, microbVar = "all", testCov = NULL, 
   #### type = pooled ends below
   }
 
-  return(selectRegroup)
+  return(results)
 
 }
 
