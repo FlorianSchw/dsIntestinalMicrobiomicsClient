@@ -34,10 +34,30 @@
 #' @export
 #'
 
-ds.microbiomeIFAA <- function(SumExp = NULL, microbVar = "all", testCov = NULL, ctrlCov = NULL, sampleIDname = NULL, testMany = TRUE, ctrlMany = FALSE,
-                              nRef = 40, nRefMaxForEsti = 2, refTaxa = NULL, adjust_method = "BY", fdrRate = 0.15, paraJobs = NULL, bootB = 500,
-                              standardize = FALSE, sequentialRun = FALSE, refReadsThresh = 0.2, taxDropThresh = 0, SDThresh = 0.05, SDquantilThresh = 0,
-                              balanceCut = 0.2, verbose = TRUE, type = c("split", "pooled"), datasources = NULL){
+ds.microbiomeIFAA <- function(SumExp = NULL,
+                              microbVar = "all",
+                              refTaxa = NULL,
+                              testCov = NULL,
+                              ctrlCov = NULL,
+                              sampleIDname = NULL,
+                              testMany = TRUE,
+                              ctrlMany = FALSE,
+                              nRef = 40,
+                              nRefMaxForEsti = 2,
+                              adjust_method = "BY",
+                              fdrRate = 0.05,
+                              paraJobs = NULL,
+                              bootB = 500,
+                              standardize = FALSE,
+                              sequentialRun = FALSE,
+                              refReadsThresh = 0.2,
+                              taxDropThresh = 0,
+                              SDThresh = 0.05,
+                              SDquantilThresh = 0,
+                              balanceCut = 0.2,
+                              verbose = TRUE,
+                              type = c("split", "pooled"),
+                              datasources = NULL){
 
 
   # look for DS connections
@@ -60,9 +80,9 @@ ds.microbiomeIFAA <- function(SumExp = NULL, microbVar = "all", testCov = NULL, 
     stop("Please provide name(s) of the covariate(s)!", call.=FALSE)
   }
 
-  if(is.null(ctrlCov)){
-    stop("Please provide name(s) of the confounders!", call.=FALSE)
-  }
+ # if(is.null(ctrlCov)){
+  #  stop("Please provide name(s) of the confounders!", call.=FALSE)
+#  }
 
   # call the internal function that checks the input object is of the same class in all studies.
   typ <- dsBaseClient::ds.class(SumExp, datasources)
@@ -74,12 +94,19 @@ ds.microbiomeIFAA <- function(SumExp = NULL, microbVar = "all", testCov = NULL, 
     stop("Only objects of type 'SummarizedExperiment' are allowed.", call.=FALSE)
   }
 
+
+  start.time <- proc.time()[3]
+
+
+
   if(type == "split"){
 
     # call the server side function that does the operation
     cally <- call("microbiomeIFAADS", SumExp, microbVar, testCov, ctrlCov, sampleIDname, testMany, ctrlMany, nRef, nRefMaxForEsti, refTaxa, adjust_method,
                   fdrRate, paraJobs, bootB, standardize, sequentialRun, refReadsThresh, taxDropThresh, SDThresh, SDquantilThresh, balanceCut, verbose)
     outcome <- DSI::datashield.aggregate(datasources, cally)
+
+    output_obj <- outcome
 
   }
 
@@ -168,10 +195,8 @@ ds.microbiomeIFAA <- function(SumExp = NULL, microbVar = "all", testCov = NULL, 
       fin_ref_taxon_name <- originRefTaxNam
       nTestcov <- length(testCovInOrder)
 
-
       boot_est <- bootResu_k[, 1] / nRuns
       se_est_all <- bootResu_k[, 2] / nRuns
-
 
 
       ref_taxon_name <- originRefTaxNam
@@ -181,9 +206,8 @@ ds.microbiomeIFAA <- function(SumExp = NULL, microbVar = "all", testCov = NULL, 
       CI_low_mat <- matrix(nrow = nTestcov, ncol = (length(taxa_sepname_list[[i]]) - 1))
       se_mat <- matrix(nrow = nTestcov, ncol = (length(taxa_sepname_list[[i]]) - 1))
 
-      adjust_method = "BY"
 
-      for (ii in seq_len(nTestcov)) {
+      for (ii in seq_len(nTestcov)){
         se_est <- se_est_all[seq(ii + 1, length(se_est_all), nPredics + 1)]
         boot_est_par <- boot_est[seq(ii + 1, length(boot_est), nPredics + 1)]
 
@@ -232,7 +256,6 @@ ds.microbiomeIFAA <- function(SumExp = NULL, microbVar = "all", testCov = NULL, 
       p_adj_sig <- p_value_save_mat[sig_ind]
       se_sig <- se_mat[sig_ind]
 
-
       cov_sig_index <- sort(unique(sig_ind[, 1]))
       sig_list_each <- list()
       if (length(cov_sig_index) > 0) {
@@ -244,20 +267,17 @@ ds.microbiomeIFAA <- function(SumExp = NULL, microbVar = "all", testCov = NULL, 
           p_adj_spe_cov <- p_adj_sig[sig_loc]
           se_spe_cov <- se_sig[sig_loc]
           cov_sig_mat <- matrix(nrow = length(sig_loc), ncol = 5)
-          colnames(cov_sig_mat) <-
-            c("estimate", "SE est", "CI low", "CI up", "adj p-value")
+          colnames(cov_sig_mat) <- c("estimate", "SE est", "CI low", "CI up", "adj p-value")
           cov_sig_mat[, 1] <- est_spe_cov
           cov_sig_mat[, 2] <- se_spe_cov
           cov_sig_mat[, 3] <- CI_low_spe_cov
           cov_sig_mat[, 4] <- CI_up_spe_cov
           cov_sig_mat[, 5] <- p_adj_spe_cov
           rownames(cov_sig_mat) <- colname_use[sig_ind[sig_loc, 2]]
-          sig_list_each[[testCovInOrder[cov_sig_index[iii]]]] <-
-            cov_sig_mat
+          sig_list_each[[testCovInOrder[cov_sig_index[iii]]]] <- cov_sig_mat
         }
       }
       all_cov_list <- list()
-
 
       all_cov_list$est_save_mat <- est_save_mat
       all_cov_list$p_value_save_mat <- p_value_save_mat
@@ -265,10 +285,7 @@ ds.microbiomeIFAA <- function(SumExp = NULL, microbVar = "all", testCov = NULL, 
       all_cov_list$CI_up_mat <- CI_up_mat
       all_cov_list$se_mat <- se_mat
 
-
       current_name <- names(outcome_part3[[1]]$analysisResults$estiList[k])
-
-
 
       results$estiList[[current_name]]$sig_list_each <- sig_list_each
       results$estiList[[current_name]]$all_cov_list <- all_cov_list
@@ -276,18 +293,11 @@ ds.microbiomeIFAA <- function(SumExp = NULL, microbVar = "all", testCov = NULL, 
 
     }
 
-
-
-
-
     #### objects for regulariz + MZILN part of MZILN
 
-    sub_taxa <- microbVar
     nSub <- outcome_part3[[1]]$analysisResults$nSub
     nTaxa <- outcome_part3[[1]]$analysisResults$nTaxa
-    #covariatesData <- outcome_part3[[1]]$covariatesData
     linkIDname <- outcome_part3[[1]]$linkIDname
-
 
     #### regulariz starts here
     #### there need to be a few changes
@@ -307,21 +317,19 @@ ds.microbiomeIFAA <- function(SumExp = NULL, microbVar = "all", testCov = NULL, 
             save_list_temp$CI_up_mat[j,],
             save_list_temp$p_value_save_mat[j,]
           )
-        est_res_save_all <-
-          data.frame(fin_ref_taxon_name[i],
-                     rownames(est_res_save_all),
-                     j,
-                     est_res_save_all)
+        est_res_save_all <- data.frame(fin_ref_taxon_name[i],
+                                       rownames(est_res_save_all),
+                                       j,
+                                       est_res_save_all)
 
-        colnames(est_res_save_all) <-
-          c("ref_tax",
-            "taxon",
-            "cov",
-            "estimate",
-            "SE est",
-            "CI low",
-            "CI up",
-            "adj p-value")
+        colnames(est_res_save_all) <- c("ref_tax",
+                                        "taxon",
+                                        "cov",
+                                        "estimate",
+                                        "SE est",
+                                        "CI low",
+                                        "CI up",
+                                        "adj p-value")
 
         rearrage_res_list[[j]] <- est_res_save_all
 
@@ -342,29 +350,57 @@ ds.microbiomeIFAA <- function(SumExp = NULL, microbVar = "all", testCov = NULL, 
     all_cov_list <- list()
 
     for (i in seq_len(length(fin_ref_taxon_name))) {
-      all_cov_list[[fin_ref_taxon_name[i]]] <-
-        results$estiList[[i]]$all_cov_list
+      all_cov_list[[fin_ref_taxon_name[i]]] <- results$estiList[[i]]$all_cov_list
     }
+
     results$all_cov_list <- all_cov_list
-
-
     ref_taxon_name <- names(all_cov_list)
 
-    exclu_1 <- !colnames(all_cov_list[[1]]$est_save_mat) %in% ref_taxon_name[2]
-    exclu_2 <- !colnames(all_cov_list[[2]]$est_save_mat) %in% ref_taxon_name[1]
 
 
 
-    #### hard coded mean estimations from the original!
-    est_save_mat_mean <- (all_cov_list[[1]]$est_save_mat[, exclu_1, drop = FALSE] + all_cov_list[[2]]$est_save_mat[, exclu_2, drop = FALSE]) / 2
-    se_mat_mean <- (all_cov_list[[1]]$se_mat[, exclu_1, drop = FALSE] + all_cov_list[[2]]$se_mat[, exclu_2, drop = FALSE]) / 2
-    CI_low_mat_mean <- (all_cov_list[[1]]$CI_low_mat[, exclu_1, drop = FALSE] + all_cov_list[[2]]$CI_low_mat[, exclu_2, drop = FALSE]) / 2
-    CI_up_mat_mean <- (all_cov_list[[1]]$CI_up_mat[, exclu_1, drop = FALSE] + all_cov_list[[2]]$CI_up_mat[, exclu_2, drop = FALSE]) / 2
+    #### hard coded exclusion and mean + standard deviation from original, needs to be adjusted for n refTaxa
+
+   # exclu_1 <- !colnames(all_cov_list[[1]]$est_save_mat) %in% ref_taxon_name[2]
+  #  exclu_2 <- !colnames(all_cov_list[[2]]$est_save_mat) %in% ref_taxon_name[1]
+
+
+
+   # est_save_mat_mean <- (all_cov_list[[1]]$est_save_mat[, exclu_1, drop = FALSE] + all_cov_list[[2]]$est_save_mat[, exclu_2, drop = FALSE]) / 2
+    #se_mat_mean <- (all_cov_list[[1]]$se_mat[, exclu_1, drop = FALSE] + all_cov_list[[2]]$se_mat[, exclu_2, drop = FALSE]) / 2
+    #CI_low_mat_mean <- (all_cov_list[[1]]$CI_low_mat[, exclu_1, drop = FALSE] + all_cov_list[[2]]$CI_low_mat[, exclu_2, drop = FALSE]) / 2
+    #CI_up_mat_mean <- (all_cov_list[[1]]$CI_up_mat[, exclu_1, drop = FALSE] + all_cov_list[[2]]$CI_up_mat[, exclu_2, drop = FALSE]) / 2
+
+
+    est_int <- list()
+    se_int <- list()
+    CI_low_int <- list()
+    CI_high_int <- list()
+
+    for (i in 1:length(all_cov_list)){
+
+      exclusion <- !colnames(all_cov_list[[i]]$est_save_mat) %in% ref_taxon_name[-c(i)]
+
+      est_int[[i]] <- all_cov_list[[i]]$est_save_mat[, exclusion, drop = FALSE]
+      se_int[[i]] <- all_cov_list[[i]]$se_mat[, exclusion, drop = FALSE]
+      CI_low_int[[i]] <- all_cov_list[[i]]$CI_low_mat[, exclusion, drop = FALSE]
+      CI_high_int[[i]] <- all_cov_list[[i]]$CI_up_mat[, exclusion, drop = FALSE]
+
+    }
+
+
+    est_save_mat_mean <- Reduce('+', est_int) / length(all_cov_list)
+    se_mat_mean <- Reduce('+', se_int) / length(all_cov_list)
+    CI_low_mat_mean <- Reduce('+', CI_low_int) / length(all_cov_list)
+    CI_up_mat_mean <- Reduce('+', CI_high_int) / length(all_cov_list)
+
+
 
 
     p_value_unadj_mean <- t(apply(est_save_mat_mean / se_mat_mean, 1, function(x) {
         (1 - pnorm(abs(x))) * 2
       }))
+
     p_value_adj_mean <- t(apply(p_value_unadj_mean, 1, function(x) {
         p.adjust(x, method = adjust_method)
       }))
@@ -375,46 +411,42 @@ ds.microbiomeIFAA <- function(SumExp = NULL, microbVar = "all", testCov = NULL, 
 
 
     full_results <- list()
-    for (j in testCovInOrder) {
-      est_res_save_all <-
-        data.frame(
-          colname_use,
-          j,
-          est_save_mat_mean[j, ],
-          se_mat_mean[j, ],
-          CI_low_mat_mean[j, ],
-          CI_up_mat_mean[j, ],
-          p_value_unadj_mean[j, ],
-          p_value_adj_mean[j, ],
-          row.names = NULL
-        )
-      colnames(est_res_save_all) <-
-        c(
-          "taxon",
-          "cov",
-          "estimate",
-          "SE est",
-          "CI low",
-          "CI up",
-          "unadj p-value",
-          "adj p-value"
-        )
-      fin_ref_taxon_dat <-
-        data.frame(
-          taxon = fin_ref_taxon_name,
-          cov = j,
-          estimate = 0,
-          SE.est = NA,
-          CI.low = NA,
-          CI.up = NA,
-          unadj.p.value = 1,
-          adj.p.value = 1
-        )
+    for (j in testCovInOrder){
+      est_res_save_all <- data.frame(colname_use,
+                                     j,
+                                     est_save_mat_mean[j, ],
+                                     se_mat_mean[j, ],
+                                     CI_low_mat_mean[j, ],
+                                     CI_up_mat_mean[j, ],
+                                     p_value_unadj_mean[j, ],
+                                     p_value_adj_mean[j, ],
+                                     row.names = NULL)
 
-      res <- rbind(data.frame(est_res_save_all), fin_ref_taxon_dat)
 
-      if (any(sub_taxa!="all")) {
-        res <- res[res$taxon %in% sub_taxa, , drop = FALSE]
+      colnames(est_res_save_all) <- c("taxon",
+                                      "cov",
+                                      "estimate",
+                                      "SE est",
+                                      "CI low",
+                                      "CI up",
+                                      "unadj p-value",
+                                      "adj p-value")
+
+      fin_ref_taxon_dat <- data.frame(taxon = fin_ref_taxon_name,
+                                      cov = j,
+                                      estimate = 0,
+                                      SE.est = NA,
+                                      CI.low = NA,
+                                      CI.up = NA,
+                                      unadj.p.value = 1,
+                                      adj.p.value = 1)
+
+
+      res <- rbind(data.frame(est_res_save_all),
+                   fin_ref_taxon_dat)
+
+      if (any(microbVar!="all")) {
+        res <- res[res$taxon %in% microbVar, , drop = FALSE]
         res$adj.p.value <- p.adjust(res$unadj.p.value, method = adjust_method)
       }
 
@@ -435,21 +467,43 @@ ds.microbiomeIFAA <- function(SumExp = NULL, microbVar = "all", testCov = NULL, 
     results$nTaxa <- nTaxa
     results$nPredics <- nPredics
     results$fin_ref_taxon_name <- fin_ref_taxon_name
-
-    rm(data)
-
-    # return results
-
     results$nRef <- nRef
 
+    #### end of native R function
+
+
+    TotalTime <- (proc.time()[3] - start.time) / 60
 
 
     output_obj <- as.data.frame(results[["full_results"]]@listData)
-    output_obj$confounder <- list(c(ctrlCov))
-    output_obj$RefTaxa <- list(c(refTaxa))
+    output_obj$confounder <- paste0(ctrlCov, collapse = " & ")
+    output_obj$RefTaxa <- paste0(refTaxa, collapse = " & ")
     output_obj$nTaxa <- results[["nTaxa"]]
     output_obj$nPredics <- results[["nPredics"]]
+    output_obj$adjust.method <- adjust_method
+    output_obj$FDR <- fdrRate
+    output_obj$Time <- TotalTime
 
+
+
+    colnames(output_obj) <- c("Taxa",
+                              "Covariate",
+                              "Estimate",
+                              "Std.Error",
+                              "CI_lower",
+                              "CI_upper",
+                              "p.value_unadj.",
+                              "p.value_adj.",
+                              "Significance",
+                              "Confounder",
+                              "RefTaxa",
+                              "Total_Taxa_Number",
+                              "Total_Covariate_Number",
+                              "Adjustment_Method",
+                              "FDR",
+                              "Time(min)")
+
+    output_obj <- output_obj[,c(1,11,2,10,3:8,15,9,14,12,13,16)]
 
 
 
@@ -466,7 +520,7 @@ ds.microbiomeIFAA <- function(SumExp = NULL, microbVar = "all", testCov = NULL, 
   #### type = pooled ends below
   }
 
-  return(outcome_part3)
+  return(output_obj)
 
 }
 
