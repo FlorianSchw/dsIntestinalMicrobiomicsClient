@@ -2,7 +2,7 @@ Package: dsIntestinalMicrobiomicsClient
 Type: Package
 Maintainer: <Florian.Schwarz@dife.de>
 Author: <Florian.Schwarz@dife.de>
-Version: 1.0.0
+Version: 1.0.1
 License: GPL-3 + file LICENSE
 Title: DataSHIELD client side functions for the dsIntestinalMicrobiomicsClient package
 Description: Client side functions for microbiome analysis with DataSHIELD.
