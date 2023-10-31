@@ -138,21 +138,24 @@ ds.microbiomeMZILN <- function(SumExp = NULL,
         unbalancePred_ori_name <- outcome[[1]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[17]]
         fwerRate <- outcome[[1]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[18]]
 
+        dfr_corr <- XTX_comb@Dim[1]
+
+
         coef_ds   <- Matrix::solve(XTX_comb, Xy_comb, tol = 1e-7)
 
         coefficients_ds <- rep(NA, nvar)
-        coefficients_ds <- round(coef_ds@x,6)
+        coefficients_ds[as.vector(keep)] <- coef_ds
 
         RSS_ds <- yy_comb - 2 * MatrixExtra::crossprod(coef_ds, Xy_comb) + MatrixExtra::crossprod(coef_ds, MatrixExtra::crossprod(XTX_comb, coef_ds))
 
-        var_res_ds <- as.numeric(RSS_ds)/(dfr_comb + 2*nvar)
+        var_res_ds <- as.numeric(RSS_ds)/(dfr_comb + (length(datasources)-1)*dfr_corr)
 
         se_coef_ds <- rep(NA, nvar)
         inv_ds     <- Matrix::solve(XTX_comb, diag(nrow(XTX_comb)), tol = 1e-7)
 
         se_coef_ds[keep] <- sqrt(var_res_ds * Matrix::diag(inv_ds))
         t1            <- coefficients_ds/se_coef_ds
-        p             <- 2 * pt(abs(t1), df = dfr_comb, lower.tail = FALSE)
+        p             <- 2 * pt(abs(t1), df = dfr_comb + (length(datasources)-1)*dfr_corr, lower.tail = FALSE)
 
 
 

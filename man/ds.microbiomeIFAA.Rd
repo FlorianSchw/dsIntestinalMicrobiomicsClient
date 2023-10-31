@@ -7,16 +7,14 @@
 ds.microbiomeIFAA(
   SumExp = NULL,
   microbVar = "all",
+  refTaxa = NULL,
   testCov = NULL,
   ctrlCov = NULL,
   sampleIDname = NULL,
   testMany = TRUE,
   ctrlMany = FALSE,
-  nRef = 40,
-  nRefMaxForEsti = 2,
-  refTaxa = NULL,
   adjust_method = "BY",
-  fdrRate = 0.15,
+  fdrRate = 0.05,
   paraJobs = NULL,
   bootB = 500,
   standardize = FALSE,
@@ -27,7 +25,7 @@ ds.microbiomeIFAA(
   SDquantilThresh = 0,
   balanceCut = 0.2,
   verbose = TRUE,
-  type = c("split", "pooled"),
+  type = c("split", "pooled", "both"),
   datasources = NULL
 )
 }
@@ -35,6 +33,8 @@ ds.microbiomeIFAA(
 \item{SumExp}{is a string character describing the SummarizedExperiment object}
 
 \item{microbVar}{This takes a single or vector of microbiome variable names (e.g., taxa, OTU and ASV names) of interest. Default is "all" meaning all microbiome variables will be analyzed. If a subset of microbiome variables is specified, the output will only contain the specified variables, and p-value adjustment for multiple testing will only be applied to the subset.}
+
+\item{refTaxa}{vector of taxa or OTU or ASV names. Theses are reference taxa specified by the user to be used in phase 1.}
 
 \item{testCov}{is a string character of covariates to be examined along the microbiome variables (can also be a vector of covariates).}
 
@@ -45,12 +45,6 @@ ds.microbiomeIFAA(
 \item{testMany}{is a logical. If 'TRUE' and 'covariates' are set to NULL, then all variables in the 'covariates' will be used.}
 
 \item{ctrlMany}{is a logical. If 'TRUE' and 'confounders' are set to NULL, then all variables except the 'coviariates' will be used as confounders.}
-
-\item{nRef}{number of randomly picked reference taxa used in phase 1.}
-
-\item{nRefMaxForEsti}{maximum number of final reference taxa used in phase 2.}
-
-\item{refTaxa}{vector of taxa or OTU or ASV names. Theses are reference taxa specified by the user to be used in phase 1.}
 
 \item{adjust_method}{The adjusting method for p value adjustment. Default is "BY" for dependent FDR adjustment. It can take any adjustment method for the p.adjust function in R.}
 
@@ -75,6 +69,10 @@ ds.microbiomeIFAA(
 \item{verbose}{Whether the process message is printed out to the console. Default is TRUE.}
 
 \item{datasources}{a list of \code{\link{DSConnection-class}} objects obtained after login}
+
+\item{nRef}{number of randomly picked reference taxa used in phase 1.}
+
+\item{nRefMaxForEsti}{maximum number of final reference taxa used in phase 2.}
 
 \item{SDTresh}{The threshold of standard deviations of sequencing reads for being chosen as the reference taxon in phase 2. The default is 0.05 which means the standard deviation of sequencing reads should be at least 0.05 in order to be chosen as a reference taxon.}
 }
