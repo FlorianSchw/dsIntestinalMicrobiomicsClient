@@ -906,7 +906,7 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
 
 
 
-  return(outcome_part3)
+  return(return_obj)
 
 }
 
