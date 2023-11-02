@@ -10,8 +10,6 @@
 #' @param sampleIDname is a string character for the sample ID variable.
 #' @param testMany is a logical. If 'TRUE' and 'covariates' are set to NULL, then all variables in the 'covariates' will be used.
 #' @param ctrlMany is a logical. If 'TRUE' and 'confounders' are set to NULL, then all variables except the 'coviariates' will be used as confounders.
-#' @param nRef number of randomly picked reference taxa used in phase 1.
-#' @param nRefMaxForEsti maximum number of final reference taxa used in phase 2.
 #' @param refTaxa vector of taxa or OTU or ASV names. Theses are reference taxa specified by the user to be used in phase 1.
 #' @param adjust_method The adjusting method for p value adjustment. Default is "BY" for dependent FDR adjustment. It can take any adjustment method for the p.adjust function in R.
 #' @param fdrRate The false discovery rate for identifying taxa/OTU/ASV associated with 'covariates'.
@@ -32,6 +30,8 @@
 #' @import dsBaseClient
 #' @import methods
 #' @import dplyr
+#' @import Matrix
+#' @import S4Vectors
 #' @export
 #'
 
@@ -129,6 +129,7 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
                   fdrRate, paraJobs, bootB, standardize, sequentialRun, refReadsThresh, taxDropThresh, SDThresh, SDquantilThresh, balanceCut, verbose)
     outcome_part3 <- DSI::datashield.aggregate(datasources, cally)
 
+    message("Error here 111.")
 
 
     #### k stands for selected microbiome
@@ -151,10 +152,10 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
         dfr_comb_list[[q]] <- outcome_part3[[q]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[5]]
       }
 
-      XTX_comb <- Reduce('+', XTX_comb_list)
-      Xy_comb <- Reduce('+', Xy_comb_list)
-      yy_comb <- Reduce('+', yy_comb_list)
-      dfr_comb <- Reduce('+', dfr_comb_list)
+      XTX_comb <- S4Vectors::Reduce('+', XTX_comb_list)
+      Xy_comb <- S4Vectors::Reduce('+', Xy_comb_list)
+      yy_comb <- S4Vectors::Reduce('+', yy_comb_list)
+      dfr_comb <- S4Vectors::Reduce('+', dfr_comb_list)
 
       nvar <- outcome_part3[[1]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[4]]
       keep <- outcome_part3[[1]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[6]]
@@ -174,10 +175,14 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
 
       dfr_corr <- XTX_comb@Dim[1]
 
+      message("Error here 1.")
+
       coef_ds   <- Matrix::solve(XTX_comb, Xy_comb, tol = 1e-7)
 
       coefficients_ds <- rep(NA, nvar)
       coefficients_ds[as.vector(keep)] <- coef_ds
+
+      message("Error here 2.")
 
       RSS_ds <- yy_comb - 2 * MatrixExtra::crossprod(coef_ds, Xy_comb) + MatrixExtra::crossprod(coef_ds, MatrixExtra::crossprod(XTX_comb, coef_ds))
 
@@ -190,6 +195,7 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
       t1            <- coefficients_ds/se_coef_ds
       p             <- 2 * pt(abs(t1), df = (dfr_comb + (length(datasources)-1)*dfr_corr), lower.tail = FALSE)
 
+      message("Error here 3.")
 
 
       coefMat<-data.frame(estimate  = coefficients_ds,
@@ -440,7 +446,6 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
     results$nTaxa <- nTaxa
     results$nPredics <- nPredics
     results$fin_ref_taxon_name <- fin_ref_taxon_name
-    results$nRef <- nRef
 
     #### end of native R function
 
@@ -530,10 +535,15 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
         unbalancePred_ori_name <- outcome_part3[[q]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[17]]
         fwerRate <- outcome_part3[[q]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[18]]
 
+
+        message("Error here 1.")
+
         coef_ds   <- Matrix::solve(XTX, Xy, tol = 1e-7)
 
         coefficients_ds <- rep(NA, nvar)
         coefficients_ds[as.vector(keep)] <- coef_ds
+
+        message("Error here 2.")
 
         RSS_ds <- yy - 2 * MatrixExtra::crossprod(coef_ds, Xy) + MatrixExtra::crossprod(coef_ds, MatrixExtra::crossprod(XTX, coef_ds))
 
@@ -546,6 +556,7 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
         t1            <- coefficients_ds/se_coef_ds
         p             <- 2 * pt(abs(t1), df = dfr, lower.tail = FALSE)
 
+        message("Error here 3.")
 
 
         coefMat<-data.frame(estimate  = coefficients_ds,
@@ -809,10 +820,10 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
       results$nTaxa <- nTaxa
       results$nPredics <- nPredics
       results$fin_ref_taxon_name <- fin_ref_taxon_name
-      results$nRef <- nRef
 
       #### end of native R function
 
+      message("Error here.")
 
       TotalTime <- (proc.time()[3] - start.time) / 60
 

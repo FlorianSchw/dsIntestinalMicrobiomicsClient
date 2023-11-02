@@ -11,7 +11,9 @@ Depends:
 Imports: 
   dsBaseClient(>= 6.2.0),
   DSI (>= 1.3.0),
-  methods
+  methods,
+  S4Vectors,
+  Matrix
 RoxygenNote: 7.2.3
 Encoding: UTF-8
 Suggests: 

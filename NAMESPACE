@@ -2,6 +2,7 @@
 
 export(ds.microbiomeBetareg)
 export(ds.microbiomeIFAA)
+export(ds.microbiomeIFAA_Test)
 export(ds.microbiomeMZILN)
 export(ds.microbiomeZoib)
 export(ds.summarizedExperiment)
