@@ -9,7 +9,7 @@ Description: Client side functions for microbiome analysis with DataSHIELD.
 Depends: 
   R(>= 4.0.0),
   Matrix
-biocViews: S4Vectors, IFAA
+biocViews: S4Vectors
 Imports: 
   dsBaseClient(>= 6.2.0),
   DSI (>= 1.3.0),
