@@ -8,7 +8,8 @@ Title: DataSHIELD client side functions for the dsIntestinalMicrobiomicsClient p
 Description: Client side functions for microbiome analysis with DataSHIELD.
 Depends: 
   R(>= 4.0.0),
-  Matrix
+  Matrix,
+  S4Vectors
 BiocManager: S4Vectors
 Imports: 
   dsBaseClient(>= 6.2.0),
