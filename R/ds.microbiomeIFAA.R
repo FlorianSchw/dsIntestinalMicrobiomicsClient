@@ -33,6 +33,74 @@
 #' @import Matrix
 #' @import S4Vectors
 #' @export
+#' @examples
+#' \dontrun{
+#'
+#'   # connecting to the Opal servers
+#'
+#'   require('DSI')
+#'   require('DSOpal')
+#'   require('dsBaseClient')
+#'   require('dsIntestinalMicrobiomicsClient')
+#'
+#'   builder <- DSI::newDSLoginBuilder()
+#'   builder$append(server = "study1",
+#'                  url = "http://192.168.56.100:8080/",
+#'                  user = "administrator", password = "datashield_test&",
+#'                  table = "MicrobSIM.MicrobSIM1", driver = "OpalDriver")
+#'   builder$append(server = "study2",
+#'                  url = "http://192.168.56.100:8080/",
+#'                  user = "administrator", password = "datashield_test&",
+#'                  table = "MicrobSIM.MicrobSIM2", driver = "OpalDriver")
+#'   builder$append(server = "study3",
+#'                  url = "http://192.168.56.100:8080/",
+#'                  user = "administrator", password = "datashield_test&",
+#'                  table = "MicrobSIM.MicrobSIM3", driver = "OpalDriver")
+#'   logindata <- builder$build()
+#'
+#'   connections <- DSI::datashield.login(logins = logindata, assign = TRUE, symbol = "D")
+#'
+#'
+#'   # Create data.frames with microbiome and covariate data of interest
+#'
+#'   ds.dataFrame(x = c("D$P_ACTINOBACTERIA",
+#'                      "D$P_BACTEROIDETES",
+#'                      "D$P_FIRMICUTES",
+#'                      "D$P_VERRUCOMICROBIA"),
+#'                newobj = "microbdata",
+#'                stringsAsFactors = FALSE)
+#'
+#'   ds.dataFrame(x = c("D$AGE",
+#'                      "D$SEX",
+#'                      "D$WEIGHT",
+#'                      "D$HEIGHT"),
+#'                newobj = "covdata",
+#'                stringsAsFactors = FALSE)
+#'
+#'
+#'   # Create the summarizedExperiment object on the server-side based on the microbiome and covariate data.frames
+#'
+#'   ds.summarizedExperiment(microbiomeData = "microbdata",
+#'                           covariateData = "covdata",
+#'                           newobj = "SumExpT")
+#'
+#'   # Calculate the
+#'
+#'   results <- ds.microbiomeIFAA(SumExp = "SumExpT",
+#'                                microbVar = "P_BACTEROIDETES",
+#'                                refTaxa = "P_VERRUCOMICROBIA",
+#'                                testCov = "WEIGHT",
+#'                                ctrlCov = c("AGE", "SEX),
+#'                                adjust_method = "BY",
+#'                                fdrRate = 0.05,
+#'                                bootB = 500,
+#'                                type = "both",
+#'                                datasources = connections)
+#'
+#'
+#'   # clear the Datashield R sessions and logout
+#'   datashield.logout(connections)
+#' }
 #'
 
 ds.microbiomeIFAA <- function(SumExp = NULL,
@@ -46,14 +114,8 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
                               adjust_method = "BY",
                               fdrRate = 0.05,
                               paraJobs = NULL,
-                              bootB = 500,
                               standardize = FALSE,
-                              sequentialRun = FALSE,
-                              refReadsThresh = 0.2,
                               taxDropThresh = 0,
-                              SDThresh = 0.05,
-                              SDquantilThresh = 0,
-                              balanceCut = 0.2,
                               verbose = TRUE,
                               type = c("split", "pooled", "both"),
                               datasources = NULL){
@@ -75,13 +137,6 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
     stop("Please provide the name of the SummarizedExperiment object!", call.=FALSE)
   }
 
-  if(is.null(testCov)){
-    stop("Please provide name(s) of the covariate(s)!", call.=FALSE)
-  }
-
- # if(is.null(ctrlCov)){
-  #  stop("Please provide name(s) of the confounders!", call.=FALSE)
-#  }
 
   # call the internal function that checks the input object is of the same class in all studies.
   typ <- dsBaseClient::ds.class(SumExp, datasources)
@@ -126,10 +181,8 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
 
     # call the server side function that does the operation
     cally <- call("microbiomeIFAAPooledDS", SumExp, microbVar_ds, testCov_ds, ctrlCov_ds, sampleIDname, testMany, ctrlMany, refTaxa_ds, adjust_method,
-                  fdrRate, paraJobs, bootB, standardize, sequentialRun, refReadsThresh, taxDropThresh, SDThresh, SDquantilThresh, balanceCut, verbose)
+                  fdrRate, paraJobs, standardize, taxDropThresh, verbose)
     outcome_part3 <- DSI::datashield.aggregate(datasources, cally)
-
-    message("Error here 111.")
 
 
     #### k stands for selected microbiome
@@ -175,14 +228,11 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
 
       dfr_corr <- XTX_comb@Dim[1]
 
-      message("Error here 1.")
-
       coef_ds   <- Matrix::solve(XTX_comb, Xy_comb, tol = 1e-7)
 
       coefficients_ds <- rep(NA, nvar)
       coefficients_ds[as.vector(keep)] <- coef_ds
 
-      message("Error here 2.")
 
       RSS_ds <- yy_comb - 2 * MatrixExtra::crossprod(coef_ds, Xy_comb) + MatrixExtra::crossprod(coef_ds, MatrixExtra::crossprod(XTX_comb, coef_ds))
 
@@ -194,8 +244,6 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
       se_coef_ds[as.vector(keep)] <- sqrt(var_res_ds * Matrix::diag(inv_ds))
       t1            <- coefficients_ds/se_coef_ds
       p             <- 2 * pt(abs(t1), df = (dfr_comb + (length(datasources)-1)*dfr_corr), lower.tail = FALSE)
-
-      message("Error here 3.")
 
 
       coefMat<-data.frame(estimate  = coefficients_ds,
@@ -469,8 +517,8 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
                                      "Std.Error",
                                      "CI_lower",
                                      "CI_upper",
-                                     "p.value_unadj.",
-                                     "p.value_adj.",
+                                     "p.value_unadj",
+                                     "p.value_adj",
                                      "Significance",
                                      "Confounder",
                                      "RefTaxa",
@@ -482,6 +530,7 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
                                      "Analysis")
 
     output_obj_pooled <- output_obj_pooled[,c(1,11,2,10,3:8,15,9,14,16,17)]
+    formatC(output_obj_pooled$p.value_unadj, format = "e", digits = 5)
 
 
     ##################
@@ -536,14 +585,10 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
         fwerRate <- outcome_part3[[q]][["analysisResults"]][["estiList"]][[k]][[1]][[1]][[18]]
 
 
-        message("Error here 1.")
-
         coef_ds   <- Matrix::solve(XTX, Xy, tol = 1e-7)
 
         coefficients_ds <- rep(NA, nvar)
         coefficients_ds[as.vector(keep)] <- coef_ds
-
-        message("Error here 2.")
 
         RSS_ds <- yy - 2 * MatrixExtra::crossprod(coef_ds, Xy) + MatrixExtra::crossprod(coef_ds, MatrixExtra::crossprod(XTX, coef_ds))
 
@@ -555,8 +600,6 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
         se_coef_ds[as.vector(keep)] <- sqrt(var_res_ds * Matrix::diag(inv_ds))
         t1            <- coefficients_ds/se_coef_ds
         p             <- 2 * pt(abs(t1), df = dfr, lower.tail = FALSE)
-
-        message("Error here 3.")
 
 
         coefMat<-data.frame(estimate  = coefficients_ds,
@@ -823,7 +866,6 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
 
       #### end of native R function
 
-      message("Error here.")
 
       TotalTime <- (proc.time()[3] - start.time) / 60
 
@@ -843,8 +885,8 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
                                       "Std.Error",
                                       "CI_lower",
                                       "CI_upper",
-                                      "p.value_unadj.",
-                                      "p.value_adj.",
+                                      "p.value_unadj",
+                                      "p.value_adj",
                                       "Significance",
                                       "Confounder",
                                       "RefTaxa",
@@ -856,6 +898,7 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
                                       "Analysis")
 
       output_obj_split <- output_obj_split[,c(1,11,2,10,3:8,15,9,14,16,17)]
+      formatC(output_obj_split$p.value_unadj, format = "e", digits = 5)
 
       output_split_list[[q]] <- output_obj_split
 

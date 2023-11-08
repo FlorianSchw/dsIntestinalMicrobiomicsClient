@@ -15,7 +15,6 @@
 #' @param standardize is a logical. If TRUE, the design matrix for X will be standardized in the analyses and the results. Default is FALSE.
 #' @param sequentialRun is a logical. Default is TRUE. It can be set to be FALSE to increase speed if there are multiple taxa in the argument 'taxa'.
 #' @param verbose Whether the process message is printed out to the console. Default is TRUE.
-#' @param seed Random seed for reproducibility. Can be set to NULL to remove seeding.
 #' @param datasources a list of \code{\link{DSConnection-class}} objects obtained after login
 #' @return \code{ds.microbiomeMZILN} returns the outcome of the specified multivariate zero-inflated logistic normal model
 #' @author Florian Schwarz for the German Institute of Human Nutrition
@@ -31,12 +30,11 @@ ds.microbiomeMZILN <- function(SumExp = NULL,
                                allCov = NULL,
                                sampleIDname = NULL,
                                adjust_method = "BY",
-                               fdrRate = 0.15,
+                               fdrRate = 0.05,
                                paraJobs = NULL,
                                bootB = 500,
                                taxDropThresh = 0,
                                standardize = FALSE,
-                               sequentialRun = TRUE,
                                verbose = TRUE,
                                type = c("split", "pooled"),
                                datasources = NULL){
@@ -72,12 +70,50 @@ ds.microbiomeMZILN <- function(SumExp = NULL,
   }
 
 
+  if(!(is.null(microbVar))){
+    microbVar_ds <- paste0(microbVar, collapse = ",")
+  } else {
+    microbVar_ds <- microbVar
+  }
+
+  if(!(is.null(refTaxa))){
+    refTaxa_ds <- paste0(refTaxa, collapse = ",")
+  } else {
+    refTaxa_ds <- refTaxa
+  }
+
+  if(!(is.null(allCov))){
+    allCov_ds <- paste0(allCov, collapse = ",")
+  } else {
+    allCov_ds <- allCov
+  }
+
+
+
+
+
+
+
   # Check whether the input is either of type data frame or matrix
   if(type == "split"){
 
-      # call the server side function that does the operation
-      cally <- call("microbiomeMZILNDS", SumExp, microbVar, refTaxa, allCov, sampleIDname, adjust_method, fdrRate, paraJobs, bootB, taxDropThresh, standardize, sequentialRun, verbose)
-      output_obj <- DSI::datashield.aggregate(datasources, cally)
+    start.time <- proc.time()[3]
+
+
+    # call the server side function that does the operation
+    cally <- call("microbiomeMZILNDS", SumExp, microbVar_ds, refTaxa_ds, allCov_ds, sampleIDname, adjust_method, fdrRate, paraJobs, taxDropThresh, standardize, verbose)
+    output <- DSI::datashield.aggregate(datasources, cally)
+
+    TotalTime_Split <- (proc.time()[3] - start.time) / 60
+
+    for (t in 1:length(datasources)){
+
+      output[[t]]$Analysis <- datasources[[t]]@name
+
+    }
+
+    output_obj <- dplyr::bind_rows(output)
+    output_obj$Time_min <- TotalTime_Split
 
   }
 
@@ -89,7 +125,7 @@ ds.microbiomeMZILN <- function(SumExp = NULL,
 
 
     # call the server side function that does the operation
-      cally <- call("microbiomeMZILNPooledDS1", SumExp, microbVar, refTaxa, allCov, sampleIDname, adjust_method, fdrRate, paraJobs, bootB, taxDropThresh, standardize, sequentialRun, verbose)
+      cally <- call("microbiomeMZILNPooledDS", SumExp, microbVar_ds, refTaxa_ds, allCov_ds, sampleIDname, adjust_method, fdrRate, paraJobs, taxDropThresh, standardize, verbose)
       outcome <- DSI::datashield.aggregate(datasources, cally)
 
 
@@ -371,10 +407,7 @@ ds.microbiomeMZILN <- function(SumExp = NULL,
         results$nPredics <- nPredics
 
 
-        #if (length(sampleIDname) > 0) {
-        #  covariatesData <- merge(CovData[, c(sampleIDname, linkIDname)], covariatesData, all = FALSE)
-        #}
-        #covariatesData <- covariatesData[, !colnames(covariatesData) %in% c(linkIDname)]
+
 
         totalTimeMins <- (proc.time()[3] - start.time) / 60
         message("The entire analysis took ", round(totalTimeMins, 2), " minutes")
@@ -389,34 +422,36 @@ ds.microbiomeMZILN <- function(SumExp = NULL,
 
         #### Transforming the output object from original type to desired data.frame
 
-        Results.RefTaxa <- unlist(output_obj_orig[[1]][1])
-        Results.Taxon <- unlist(output_obj_orig[[1]][2])
-        Results.Covariate <- unlist(output_obj_orig[[1]][3])
-        Results.Estimate <- unlist(output_obj_orig[[1]][4])
-        Results.SE.est <- unlist(output_obj_orig[[1]][5])
-        Results.CI.low <- unlist(output_obj_orig[[1]][6])
-        Results.CI.high <- unlist(output_obj_orig[[1]][7])
-        Results.adj.p.value <- unlist(output_obj_orig[[1]][8])
-        Results.unadjust.p.value <- unlist(output_obj_orig[[1]][9])
-        Results.sig_ind <- unlist(output_obj_orig[[1]][10])
-        Results.TotalTime <- unlist(output_obj_orig[[2]][1])
-        Results.FDR <- unlist(output_obj_orig[[2]][2])
-        Results.Adjust_Method <- unlist(output_obj_orig[[2]][3])
-        Results.Boots <- bootB
+        RefTaxa <- unlist(output_obj_orig[[1]][1])
+        Taxa <- unlist(output_obj_orig[[1]][2])
+        Covariate <- unlist(output_obj_orig[[1]][3])
+        Estimate <- unlist(output_obj_orig[[1]][4])
+        Std.Error <- unlist(output_obj_orig[[1]][5])
+        CI_lower <- unlist(output_obj_orig[[1]][6])
+        CI_upper <- unlist(output_obj_orig[[1]][7])
+        p.value_adj <- unlist(output_obj_orig[[1]][8])
+        p.value_unadj <- unlist(output_obj_orig[[1]][9])
+        Significance <- unlist(output_obj_orig[[1]][10])
+        Time_min <- unlist(output_obj_orig[[2]][1])
+        FDR <- unlist(output_obj_orig[[2]][2])
+        Adjustment_Method <- unlist(output_obj_orig[[2]][3])
+        Analysis <- "pooled"
 
-        output_obj <- data.frame(Results.RefTaxa,
-                                 Results.Taxon,
-                                 Results.Covariate,
-                                 Results.Estimate,
-                                 Results.SE.est,
-                                 Results.CI.low,
-                                 Results.CI.high,
-                                 Results.adj.p.value,
-                                 Results.unadjust.p.value,
-                                 Results.sig_ind,
-                                 Results.FDR,
-                                 Results.Adjust_Method,
-                                 Results.Boots)
+
+        output_obj <- data.frame(Taxa,
+                                 RefTaxa,
+                                 Covariate,
+                                 Estimate,
+                                 Std.Error,
+                                 CI_lower,
+                                 CI_upper,
+                                 p.value_unadj,
+                                 p.value_adj,
+                                 FDR,
+                                 Significance,
+                                 Adjustment_Method,
+                                 Analysis,
+                                 Time_min)
 
 
   }

@@ -48,8 +48,6 @@ ds.microbiomeMZILN(
 \item{taxa}{is a string character for the microbiome variable denominator (can also be a vector of microbiome variables)}
 
 \item{covariates}{is a string character of covariates to be examined along the microbiome variables (can also be a vector of covariates).}
-
-\item{seed}{Random seed for reproducibility. Can be set to NULL to remove seeding.}
 }
 \value{
 \code{ds.microbiomeMZILN} returns the outcome of the specified multivariate zero-inflated logistic normal model
