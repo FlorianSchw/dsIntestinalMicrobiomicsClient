@@ -21,6 +21,11 @@
 #' @import DSI
 #' @import dsBaseClient
 #' @import methods
+#' @import Matrix
+#' @import S4Vectors
+#' @import MatrixExtra
+#' @import DescTools
+#' @import stringr
 #' @export
 #'
 
