@@ -14,7 +14,10 @@ Imports:
   dsBaseClient(>= 6.2.0),
   DSI (>= 1.3.0),
   methods,
-  MatrixExtra
+  MatrixExtra,
+  DescTools,
+  stringr,
+  IFAA
 RoxygenNote: 7.2.3
 Encoding: UTF-8
 Suggests: 

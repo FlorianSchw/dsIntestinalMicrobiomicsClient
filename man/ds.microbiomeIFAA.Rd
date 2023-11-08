@@ -76,6 +76,76 @@ This function is similar to the native R function from the IFAA package
 The function calls the server-side function \code{microbiomeIFAADS} that computes the
 association analysis from a SummarizedExperiment object. SummarizedExperiment objects can be computed using the \code{ds.summarizedExperiment} function.
 }
+\examples{
+\dontrun{
+
+  # connecting to the Opal servers
+
+  require('DSI')
+  require('DSOpal')
+  require('dsBaseClient')
+  require('dsIntestinalMicrobiomicsClient')
+
+  builder <- DSI::newDSLoginBuilder()
+  builder$append(server = "study1",
+                 url = "http://192.168.56.100:8080/",
+                 user = "administrator", password = "datashield_test&",
+                 table = "MicrobSIM.MicrobSIM1", driver = "OpalDriver")
+  builder$append(server = "study2",
+                 url = "http://192.168.56.100:8080/",
+                 user = "administrator", password = "datashield_test&",
+                 table = "MicrobSIM.MicrobSIM2", driver = "OpalDriver")
+  builder$append(server = "study3",
+                 url = "http://192.168.56.100:8080/",
+                 user = "administrator", password = "datashield_test&",
+                 table = "MicrobSIM.MicrobSIM3", driver = "OpalDriver")
+  logindata <- builder$build()
+
+  connections <- DSI::datashield.login(logins = logindata, assign = TRUE, symbol = "D")
+
+
+  # Create data.frames with microbiome and covariate data of interest
+
+  ds.dataFrame(x = c("D$P_ACTINOBACTERIA",
+                     "D$P_BACTEROIDETES",
+                     "D$P_FIRMICUTES",
+                     "D$P_VERRUCOMICROBIA"),
+               newobj = "microbdata",
+               stringsAsFactors = FALSE)
+
+  ds.dataFrame(x = c("D$AGE",
+                     "D$SEX",
+                     "D$WEIGHT",
+                     "D$HEIGHT"),
+               newobj = "covdata",
+               stringsAsFactors = FALSE)
+
+
+  # Create the summarizedExperiment object on the server-side based on the microbiome and covariate data.frames
+
+  ds.summarizedExperiment(microbiomeData = "microbdata",
+                          covariateData = "covdata",
+                          newobj = "SumExpT")
+
+  # Calculate the
+
+  results <- ds.microbiomeIFAA(SumExp = "SumExpT",
+                               microbVar = "P_BACTEROIDETES",
+                               refTaxa = "P_VERRUCOMICROBIA",
+                               testCov = "WEIGHT",
+                               ctrlCov = c("AGE", "SEX"),
+                               adjust_method = "BY",
+                               fdrRate = 0.05,
+                               bootB = 500,
+                               type = "both",
+                               datasources = connections)
+
+
+  # clear the Datashield R sessions and logout
+  datashield.logout(connections)
+}
+
+}
 \author{
 Florian Schwarz for the German Institute of Human Nutrition
 }

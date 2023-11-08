@@ -33,6 +33,8 @@
 #' @import Matrix
 #' @import S4Vectors
 #' @import MatrixExtra
+#' @import DescTools
+#' @import stringr
 #' @export
 #' @examples
 #' \dontrun{
@@ -91,7 +93,7 @@
 #'                                microbVar = "P_BACTEROIDETES",
 #'                                refTaxa = "P_VERRUCOMICROBIA",
 #'                                testCov = "WEIGHT",
-#'                                ctrlCov = c("AGE", "SEX),
+#'                                ctrlCov = c("AGE", "SEX"),
 #'                                adjust_method = "BY",
 #'                                fdrRate = 0.05,
 #'                                bootB = 500,
