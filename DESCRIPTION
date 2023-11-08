@@ -9,14 +9,15 @@ Description: Client side functions for microbiome analysis with DataSHIELD.
 Depends: 
   R(>= 4.0.0),
   Matrix
-BiocManager::install("S4Vectors")
+biocViews: Software
 Imports: 
   dsBaseClient(>= 6.2.0),
   DSI (>= 1.3.0),
   methods,
   MatrixExtra,
   DescTools,
-  stringr
+  stringr,
+  S4Vectors
 RoxygenNote: 7.2.3
 Encoding: UTF-8
 Suggests: 
