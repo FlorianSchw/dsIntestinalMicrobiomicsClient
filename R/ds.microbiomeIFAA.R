@@ -32,6 +32,7 @@
 #' @import dplyr
 #' @import Matrix
 #' @import S4Vectors
+#' @import MatrixExtra
 #' @export
 #' @examples
 #' \dontrun{

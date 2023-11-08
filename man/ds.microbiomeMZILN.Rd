@@ -11,12 +11,11 @@ ds.microbiomeMZILN(
   allCov = NULL,
   sampleIDname = NULL,
   adjust_method = "BY",
-  fdrRate = 0.15,
+  fdrRate = 0.05,
   paraJobs = NULL,
   bootB = 500,
   taxDropThresh = 0,
   standardize = FALSE,
-  sequentialRun = TRUE,
   verbose = TRUE,
   type = c("split", "pooled"),
   datasources = NULL
@@ -39,8 +38,6 @@ ds.microbiomeMZILN(
 
 \item{standardize}{is a logical. If TRUE, the design matrix for X will be standardized in the analyses and the results. Default is FALSE.}
 
-\item{sequentialRun}{is a logical. Default is TRUE. It can be set to be FALSE to increase speed if there are multiple taxa in the argument 'taxa'.}
-
 \item{verbose}{Whether the process message is printed out to the console. Default is TRUE.}
 
 \item{datasources}{a list of \code{\link{DSConnection-class}} objects obtained after login}
@@ -48,6 +45,8 @@ ds.microbiomeMZILN(
 \item{taxa}{is a string character for the microbiome variable denominator (can also be a vector of microbiome variables)}
 
 \item{covariates}{is a string character of covariates to be examined along the microbiome variables (can also be a vector of covariates).}
+
+\item{sequentialRun}{is a logical. Default is TRUE. It can be set to be FALSE to increase speed if there are multiple taxa in the argument 'taxa'.}
 }
 \value{
 \code{ds.microbiomeMZILN} returns the outcome of the specified multivariate zero-inflated logistic normal model
