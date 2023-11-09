@@ -14,14 +14,8 @@
 #' @param adjust_method The adjusting method for p value adjustment. Default is "BY" for dependent FDR adjustment. It can take any adjustment method for the p.adjust function in R.
 #' @param fdrRate The false discovery rate for identifying taxa/OTU/ASV associated with 'covariates'.
 #' @param paraJobs If 'sequentialRun' is FALSE, this specifies the number of parallel jobs that will be registered to run the algoithm. If specified as NULL, it will automatically detect the cores to decide the number of parallel jobs.
-#' @param bootB number of bootstrap samples for obtaining confidence interval of estimates in phase 2 for the high dimensional regression. Default is 500.
 #' @param standardize is a logical. If 'TRUE', the design matrix for X will be standardized in the analyses and the results. Default is FALSE.
-#' @param sequentialRun is a logical. Defines whether there are parallel jobs or not.
-#' @param refReadsThresh The threshold of proportion of non-zero sequencing reads for choosing the reference taxon in phase 2. Default is 0.2 meaning that at least 20\% non-zero sequencing reads are necessary.
 #' @param taxDropThresh The threshold of number of non-zero sequencing reads for each taxon to be dropped from the analysis. Default is 0 which means that taxon without any sequencing reads will be dropped from the analysis.
-#' @param SDTresh The threshold of standard deviations of sequencing reads for being chosen as the reference taxon in phase 2. The default is 0.05 which means the standard deviation of sequencing reads should be at least 0.05 in order to be chosen as a reference taxon.
-#' @param SDquantilThresh The threshold of the quantile of standard deviation of sequencing reads, above which could be selected as a reference taxon. Default is 0.
-#' @param balanceCut The threshold of the proportion of non-zero sequencing reads in each group of a binary variable for choosing the final reference taxa in phase 2. The default is 0.2 meaning at least 20\% non-zero sequencing reads in each group are needed to be eligible for being chosen as a final reference taxon.
 #' @param verbose Whether the process message is printed out to the console. Default is TRUE.
 #' @param datasources a list of \code{\link{DSConnection-class}} objects obtained after login
 #' @return \code{ds.microbiomeIFAA} returns the association of the microbiome data with the covariates
@@ -96,7 +90,6 @@
 #'                                ctrlCov = c("AGE", "SEX"),
 #'                                adjust_method = "BY",
 #'                                fdrRate = 0.05,
-#'                                bootB = 500,
 #'                                type = "both",
 #'                                datasources = connections)
 #'
@@ -150,6 +143,8 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
   if(!('SummarizedExperiment' %in% typ)){
     stop("Only objects of type 'SummarizedExperiment' are allowed.", call.=FALSE)
   }
+
+
 
 
   start.time <- proc.time()[3]
