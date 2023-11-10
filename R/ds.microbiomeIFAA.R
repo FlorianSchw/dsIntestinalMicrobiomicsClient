@@ -81,7 +81,7 @@
 #'                           covariateData = "covdata",
 #'                           newobj = "SumExpT")
 #'
-#'   # Calculate the
+#'   # Calculate the associations of covariates with the microbiome ratios
 #'
 #'   results <- ds.microbiomeIFAA(SumExp = "SumExpT",
 #'                                microbVar = "P_BACTEROIDETES",
@@ -90,8 +90,7 @@
 #'                                ctrlCov = c("AGE", "SEX"),
 #'                                adjust_method = "BY",
 #'                                fdrRate = 0.05,
-#'                                type = "both",
-#'                                datasources = connections)
+#'                                type = "both")
 #'
 #'
 #'   # clear the Datashield R sessions and logout

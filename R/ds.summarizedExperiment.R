@@ -65,6 +65,10 @@
 #'                           covariateData = "covdata",
 #'                           newobj = "SumExpT")
 #'
+#'   # clear the Datashield R sessions and logout
+#'   datashield.logout(connections)
+#' }
+#'
 
 ds.summarizedExperiment <- function(microbiomeData = NULL, covariateData = NULL, newobj = NULL, datasources = NULL){
 

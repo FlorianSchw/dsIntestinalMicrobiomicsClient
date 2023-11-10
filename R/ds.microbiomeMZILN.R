@@ -77,11 +77,18 @@
 #'                           covariateData = "covdata",
 #'                           newobj = "SumExpT")
 #'
+#'
+#'   # Calculate the associations of covariates with the microbiome ratios
+#'
 #'   results <- ds.microbiomeMZILN(SumExp = "SumExpT",
 #'                                 microbVar = "P_ACTINOBACTERIA",
 #'                                 refTaxa = "P_VERRUCOMICROBIA",
-#'                                 allCov = c"Weight",
+#'                                 allCov = "WEIGHT",
 #'                                 type = "pooled")
+#'
+#'   # clear the Datashield R sessions and logout
+#'   datashield.logout(connections)
+#' }
 #'
 
 ds.microbiomeMZILN <- function(SumExp = NULL,
