@@ -4,16 +4,15 @@
 #' @details The function calls the server-side function \code{microbiomeMZILNDS} that computes the
 #' regression from a SummarizedExperiment object. SummarizedExperiment objects can be computed using the \code{ds.summarizedExperiment} function.
 #' @param SumExp is a string character describing the SummarizedExperiment object
-#' @param taxa is a string character for the microbiome variable denominator (can also be a vector of microbiome variables)
-#' @param covariates is a string character of covariates to be examined along the microbiome variables (can also be a vector of covariates).
+#' @param microbVar This takes a single or vector of microbiome variable names (e.g., taxa, OTU and ASV names) of interest. Default is "all" meaning all microbiome variables will be analyzed. If a subset of microbiome variables is specified, the output will only contain the specified variables, and p-value adjustment for multiple testing will only be applied to the subset.
+#' @param refTaxa vector of microbiome taxa or OTU or ASV names. Will be denominator(s) to the microbVar.
+#' @param allCov All covariates of interest for estimating and testing their associations with the targeted ratios. Default is 'NULL' meaning that all covariates in covData are of interest.
 #' @param sampleIDname is a string character for the sample ID variable.
 #' @param adjust_method The adjusting method for p value adjustment. Default is "BY" for dependent FDR adjustment. It can take any adjustment method for the p.adjust function in R.
 #' @param fdrRate The false discovery rate for identifying taxa/OTU/ASV associated with 'covariates'.
-#' @param paraJobs If 'sequentialRun' is FALSE, this specifies the number of parallel jobs that will be registered to run the algoithm. If specified as NULL, it will automatically detect the cores to decide the number of parallel jobs.
-#' @param bootB Number of bootstrap samples for obtaining confidence interval of estimates for the high dimensional regression.Default is 500.
+#' @param paraJobs If 'sequentialRun' is FALSE, this specifies the number of parallel jobs that will be registered to run the algorithm. If specified as NULL, it will automatically detect the cores to decide the number of parallel jobs.
 #' @param taxDropThresh The threshold of number of non-zero sequencing reads for each taxon to be dropped from the analysis. Default is 0 which means that taxon without any sequencing reads will be dropped from the analysis.
 #' @param standardize is a logical. If TRUE, the design matrix for X will be standardized in the analyses and the results. Default is FALSE.
-#' @param sequentialRun is a logical. Default is TRUE. It can be set to be FALSE to increase speed if there are multiple taxa in the argument 'taxa'.
 #' @param verbose Whether the process message is printed out to the console. Default is TRUE.
 #' @param datasources a list of \code{\link{DSConnection-class}} objects obtained after login
 #' @return \code{ds.microbiomeMZILN} returns the outcome of the specified multivariate zero-inflated logistic normal model
@@ -27,6 +26,62 @@
 #' @import DescTools
 #' @import stringr
 #' @export
+#' @examples
+#' \dontrun{
+#'
+#'   # connecting to the Opal servers
+#'
+#'   require('DSI')
+#'   require('DSOpal')
+#'   require('dsBaseClient')
+#'   require('dsIntestinalMicrobiomicsClient')
+#'
+#'   builder <- DSI::newDSLoginBuilder()
+#'   builder$append(server = "study1",
+#'                  url = "http://192.168.56.100:8080/",
+#'                  user = "administrator", password = "datashield_test&",
+#'                  table = "MicrobSIM.MicrobSIM1", driver = "OpalDriver")
+#'   builder$append(server = "study2",
+#'                  url = "http://192.168.56.100:8080/",
+#'                  user = "administrator", password = "datashield_test&",
+#'                  table = "MicrobSIM.MicrobSIM2", driver = "OpalDriver")
+#'   builder$append(server = "study3",
+#'                  url = "http://192.168.56.100:8080/",
+#'                  user = "administrator", password = "datashield_test&",
+#'                  table = "MicrobSIM.MicrobSIM3", driver = "OpalDriver")
+#'   logindata <- builder$build()
+#'
+#'   connections <- DSI::datashield.login(logins = logindata, assign = TRUE, symbol = "D")
+#'
+#'
+#'   # Create data.frames with microbiome and covariate data of interest
+#'
+#'   ds.dataFrame(x = c("D$P_ACTINOBACTERIA",
+#'                      "D$P_BACTEROIDETES",
+#'                      "D$P_FIRMICUTES",
+#'                      "D$P_VERRUCOMICROBIA"),
+#'                newobj = "microbdata",
+#'                stringsAsFactors = FALSE)
+#'
+#'   ds.dataFrame(x = c("D$AGE",
+#'                      "D$SEX",
+#'                      "D$WEIGHT",
+#'                      "D$HEIGHT"),
+#'                newobj = "covdata",
+#'                stringsAsFactors = FALSE)
+#'
+#'
+#'   # Create the summarizedExperiment object on the server-side based on the microbiome and covariate data.frames
+#'
+#'   ds.summarizedExperiment(microbiomeData = "microbdata",
+#'                           covariateData = "covdata",
+#'                           newobj = "SumExpT")
+#'
+#'   results <- ds.microbiomeMZILN(SumExp = "SumExpT",
+#'                                 microbVar = "P_ACTINOBACTERIA",
+#'                                 refTaxa = "P_VERRUCOMICROBIA",
+#'                                 allCov = c"Weight",
+#'                                 type = "pooled")
 #'
 
 ds.microbiomeMZILN <- function(SumExp = NULL,
@@ -37,7 +92,6 @@ ds.microbiomeMZILN <- function(SumExp = NULL,
                                adjust_method = "BY",
                                fdrRate = 0.05,
                                paraJobs = NULL,
-                               bootB = 500,
                                taxDropThresh = 0,
                                standardize = FALSE,
                                verbose = TRUE,

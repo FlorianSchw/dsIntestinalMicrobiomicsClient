@@ -6,11 +6,11 @@
 #' @param SumExp is a string character describing the SummarizedExperiment object
 #' @param microbVar This takes a single or vector of microbiome variable names (e.g., taxa, OTU and ASV names) of interest. Default is "all" meaning all microbiome variables will be analyzed. If a subset of microbiome variables is specified, the output will only contain the specified variables, and p-value adjustment for multiple testing will only be applied to the subset.
 #' @param testCov is a string character of covariates to be examined along the microbiome variables (can also be a vector of covariates).
-#' @param ctrlCov is a string character for the covariates that will be adjusted in the model (can also be a vector of microbiome variables)
+#' @param ctrlCov is a string character for the covariates that will be adjusted in the model (can also be a vector of confounders).
 #' @param sampleIDname is a string character for the sample ID variable.
 #' @param testMany is a logical. If 'TRUE' and 'covariates' are set to NULL, then all variables in the 'covariates' will be used.
 #' @param ctrlMany is a logical. If 'TRUE' and 'confounders' are set to NULL, then all variables except the 'coviariates' will be used as confounders.
-#' @param refTaxa vector of taxa or OTU or ASV names. Theses are reference taxa specified by the user to be used in phase 1.
+#' @param refTaxa vector of microbiome taxa or OTU or ASV names. Will be denominator(s) to microbVar.
 #' @param adjust_method The adjusting method for p value adjustment. Default is "BY" for dependent FDR adjustment. It can take any adjustment method for the p.adjust function in R.
 #' @param fdrRate The false discovery rate for identifying taxa/OTU/ASV associated with 'covariates'.
 #' @param paraJobs If 'sequentialRun' is FALSE, this specifies the number of parallel jobs that will be registered to run the algoithm. If specified as NULL, it will automatically detect the cores to decide the number of parallel jobs.
