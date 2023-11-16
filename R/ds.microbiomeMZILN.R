@@ -404,8 +404,7 @@ ds.microbiomeMZILN <- function(SumExp = NULL,
         sub_taxa <- microbVar
         nSub <- outcome[[1]]$analysisResults$nSub
         nTaxa <- outcome[[1]]$analysisResults$nTaxa
-        #covariatesData <- outcome[[1]]$covariatesData
-        linkIDname <- outcome[[1]]$linkIDname
+
 
 
         #### regulariz_MZILN starts here

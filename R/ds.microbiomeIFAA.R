@@ -497,6 +497,11 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
 
     TotalTime <- (proc.time()[3] - start.time) / 60
 
+    valid_sample_number <- c()
+    for (ee in 1:length(outcome_part3)){
+      valid_sample_number[ee] <- outcome_part3[[ee]]$analysisResults$qualifyData
+    }
+
     output_obj_pooled <- as.data.frame(results[["full_results"]]@listData)
     output_obj_pooled$confounder <- paste0(ctrlCov, collapse = " & ")
     output_obj_pooled$RefTaxa <- paste0(refTaxa, collapse = " & ")
@@ -506,6 +511,7 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
     output_obj_pooled$FDR <- fdrRate
     output_obj_pooled$Time <- TotalTime
     output_obj_pooled$Analysis <- "pooled"
+    output_obj_pooled$Valid_Observations <- sum(valid_sample_number)
 
 
     colnames(output_obj_pooled) <- c("Taxa",
@@ -524,9 +530,10 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
                                      "Adjustment_Method",
                                      "FDR",
                                      "Time_min",
-                                     "Analysis")
+                                     "Analysis",
+                                     "Valid_Observations")
 
-    output_obj_pooled <- output_obj_pooled[,c(1,11,2,10,3:8,15,9,14,16,17)]
+    output_obj_pooled <- output_obj_pooled[,c(1,11,2,10,3:8,15,9,18,14,16,17)]
     formatC(output_obj_pooled$p.value_unadj, format = "e", digits = 5)
 
 
@@ -875,6 +882,8 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
       output_obj_split$FDR <- fdrRate
       output_obj_split$Time <- TotalTime
       output_obj_split$Analysis <- datasources[[q]]@name
+      output_obj_split$Valid_Observations <- outcome_part3[[q]]$analysisResults$qualifyData
+
 
       colnames(output_obj_split) <- c("Taxa",
                                       "Covariate",
@@ -892,9 +901,10 @@ ds.microbiomeIFAA <- function(SumExp = NULL,
                                       "Adjustment_Method",
                                       "FDR",
                                       "Time_min",
-                                      "Analysis")
+                                      "Analysis",
+                                      "Valid_Observations")
 
-      output_obj_split <- output_obj_split[,c(1,11,2,10,3:8,15,9,14,16,17)]
+      output_obj_split <- output_obj_split[,c(1,11,2,10,3:8,15,9,18,14,16,17)]
       formatC(output_obj_split$p.value_unadj, format = "e", digits = 5)
 
       output_split_list[[q]] <- output_obj_split
