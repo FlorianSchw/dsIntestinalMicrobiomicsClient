@@ -28,11 +28,11 @@ ds.microbiomeIFAA(
 
 \item{microbVar}{This takes a single or vector of microbiome variable names (e.g., taxa, OTU and ASV names) of interest. Default is "all" meaning all microbiome variables will be analyzed. If a subset of microbiome variables is specified, the output will only contain the specified variables, and p-value adjustment for multiple testing will only be applied to the subset.}
 
-\item{refTaxa}{vector of taxa or OTU or ASV names. Theses are reference taxa specified by the user to be used in phase 1.}
+\item{refTaxa}{vector of microbiome taxa or OTU or ASV names. Will be denominator(s) to microbVar.}
 
 \item{testCov}{is a string character of covariates to be examined along the microbiome variables (can also be a vector of covariates).}
 
-\item{ctrlCov}{is a string character for the covariates that will be adjusted in the model (can also be a vector of microbiome variables)}
+\item{ctrlCov}{is a string character for the covariates that will be adjusted in the model (can also be a vector of confounders).}
 
 \item{sampleIDname}{is a string character for the sample ID variable.}
 
@@ -53,18 +53,6 @@ ds.microbiomeIFAA(
 \item{verbose}{Whether the process message is printed out to the console. Default is TRUE.}
 
 \item{datasources}{a list of \code{\link{DSConnection-class}} objects obtained after login}
-
-\item{bootB}{number of bootstrap samples for obtaining confidence interval of estimates in phase 2 for the high dimensional regression. Default is 500.}
-
-\item{sequentialRun}{is a logical. Defines whether there are parallel jobs or not.}
-
-\item{refReadsThresh}{The threshold of proportion of non-zero sequencing reads for choosing the reference taxon in phase 2. Default is 0.2 meaning that at least 20\% non-zero sequencing reads are necessary.}
-
-\item{SDTresh}{The threshold of standard deviations of sequencing reads for being chosen as the reference taxon in phase 2. The default is 0.05 which means the standard deviation of sequencing reads should be at least 0.05 in order to be chosen as a reference taxon.}
-
-\item{SDquantilThresh}{The threshold of the quantile of standard deviation of sequencing reads, above which could be selected as a reference taxon. Default is 0.}
-
-\item{balanceCut}{The threshold of the proportion of non-zero sequencing reads in each group of a binary variable for choosing the final reference taxa in phase 2. The default is 0.2 meaning at least 20\% non-zero sequencing reads in each group are needed to be eligible for being chosen as a final reference taxon.}
 }
 \value{
 \code{ds.microbiomeIFAA} returns the association of the microbiome data with the covariates
@@ -127,7 +115,7 @@ association analysis from a SummarizedExperiment object. SummarizedExperiment ob
                           covariateData = "covdata",
                           newobj = "SumExpT")
 
-  # Calculate the
+  # Calculate the associations of covariates with the microbiome ratios
 
   results <- ds.microbiomeIFAA(SumExp = "SumExpT",
                                microbVar = "P_BACTEROIDETES",
@@ -136,9 +124,7 @@ association analysis from a SummarizedExperiment object. SummarizedExperiment ob
                                ctrlCov = c("AGE", "SEX"),
                                adjust_method = "BY",
                                fdrRate = 0.05,
-                               bootB = 500,
-                               type = "both",
-                               datasources = connections)
+                               type = "both")
 
 
   # clear the Datashield R sessions and logout
