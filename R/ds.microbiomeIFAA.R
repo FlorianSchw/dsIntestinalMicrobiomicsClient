@@ -17,6 +17,7 @@
 #' @param standardize is a logical. If 'TRUE', the design matrix for X will be standardized in the analyses and the results. Default is FALSE.
 #' @param taxDropThresh The threshold of number of non-zero sequencing reads for each taxon to be dropped from the analysis. Default is 0 which means that taxon without any sequencing reads will be dropped from the analysis.
 #' @param verbose Whether the process message is printed out to the console. Default is TRUE.
+#' @param type multiple options are possible, such as split, combined, both
 #' @param datasources a list of \code{\link{DSConnection-class}} objects obtained after login
 #' @return \code{ds.microbiomeIFAA} returns the association of the microbiome data with the covariates
 #' @author Florian Schwarz for the German Institute of Human Nutrition

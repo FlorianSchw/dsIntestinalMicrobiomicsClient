@@ -43,6 +43,8 @@ ds.microbiomeMZILN(
 
 \item{verbose}{Whether the process message is printed out to the console. Default is TRUE.}
 
+\item{type}{multiple options are possible, such as split, combined, both}
+
 \item{datasources}{a list of \code{\link{DSConnection-class}} objects obtained after login}
 }
 \value{
