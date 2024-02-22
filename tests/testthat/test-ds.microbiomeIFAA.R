@@ -35,7 +35,7 @@ test_that("ds.microbiomeIFAA Errors", {
                                  ctrlCov = c("Age", "Sex"),
                                  adjust_method = "BY",
                                  fdrRate = 0.05,
-                                 type = "both")
+                                 type = "split")
 
   expect_silent(results)
 
