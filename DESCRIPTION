@@ -16,7 +16,7 @@ Imports:
   methods,
   dplyr,
   MatrixExtra,
-  DescTools(<= 0.99.50),
+  DescTools(<= 0.99.52),
   stringr,
   S4Vectors
 RoxygenNote: 7.3.1
@@ -29,5 +29,5 @@ Suggests:
     remotes,
     devtools,
     dsIntestinalMicrobiomics
-Remotes: datashield/dsBaseClient, datashield/dsBase, FlorianSchw/dsIntestinalMicrobiomics, cran/DescTools@0.99.50
+Remotes: datashield/dsBaseClient, datashield/dsBase, FlorianSchw/dsIntestinalMicrobiomics, cran/DescTools@0.99.52
 Config/testthat/edition: 3
