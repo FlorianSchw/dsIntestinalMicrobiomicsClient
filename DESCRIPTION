@@ -29,5 +29,5 @@ Suggests:
     remotes,
     devtools,
     dsIntestinalMicrobiomics
-Remotes: datashield/dsBaseClient, datashield/dsBase, FlorianSchw/dsIntestinalMicrobiomics, cran/DescTools@0.99.52
+Remotes: datashield/dsBaseClient, datashield/dsBase, FlorianSchw/dsIntestinalMicrobiomics, cran/DescTools@0.99.50
 Config/testthat/edition: 3
